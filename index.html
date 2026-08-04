@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>A TUM Ti · Toma de Pedidos</title>
 <meta name="theme-color" content="#111827">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -52,10 +52,12 @@ html, body {
   color: var(--text);
   font-family: var(--sans);
   -webkit-tap-highlight-color: transparent;
+  overflow-x: hidden;
+  width: 100%;
 }
 
 body {
-  padding-bottom: 24px;
+  padding-bottom: max(24px, env(safe-area-inset-bottom));
   min-height: 100vh;
 }
 
@@ -176,16 +178,24 @@ input:focus-visible, button:focus-visible {
   padding: 16px;
 }
 
-.view-header { margin-bottom: 8px; }
+.view-header { margin-bottom: 14px; }
 .back-btn {
-  background: none;
-  border: none;
+  background: var(--card);
+  border: 1px solid var(--line);
   color: var(--accent);
   font-family: var(--mono);
-  font-weight: 600;
+  font-weight: 700;
   font-size: 13.5px;
-  padding: 6px 0;
+  padding: 10px 16px;
+  border-radius: 999px;
+  box-shadow: var(--shadow-card);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background-color 0.15s ease, transform 0.15s ease;
 }
+.back-btn:hover { background-color: var(--accent-soft); }
+.back-btn:active { transform: scale(0.97); }
 
 h2 {
   font-family: var(--mono);
@@ -351,12 +361,15 @@ h2::before { content: '$ '; color: var(--accent); font-weight: 700; }
 .scanner-modal {
   position: fixed;
   inset: 0;
-  background: rgba(17,24,39,0.72);
-  z-index: 80;
+  background: rgba(17,24,39,0.78);
+  z-index: 500;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 16px;
+  padding-top: max(16px, env(safe-area-inset-top));
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
+  overflow-y: auto;
 }
 .scanner-modal[hidden] { display: none; }
 
@@ -365,8 +378,9 @@ h2::before { content: '$ '; color: var(--accent); font-weight: 700; }
   border-radius: var(--radius);
   width: 100%;
   max-width: 420px;
-  max-height: 92vh;
-  overflow-y: auto;
+  margin: auto;
+  max-height: none;
+  overflow: visible;
   padding: 16px;
   box-shadow: var(--shadow-card);
 }
@@ -743,6 +757,7 @@ h2::before { content: '$ '; color: var(--accent); font-weight: 700; }
 /* ---------- Ticket ---------- */
 
 #ticketView:not([hidden]) { display: flex; flex-direction: column; align-items: center; }
+#ticketView .view-header { align-self: flex-start; }
 
 .ticket {
   width: 100%;
@@ -815,13 +830,31 @@ h2::before { content: '$ '; color: var(--accent); font-weight: 700; }
   border-radius: 6px;
   font-family: var(--mono);
   font-size: 12.5px;
-  z-index: 200;
+  z-index: 600;
   box-shadow: 0 8px 24px rgba(0,0,0,0.25);
 }
 .toast::before { content: '> '; color: #fff; }
 
 @media (max-width: 380px) {
   .product-grid { grid-template-columns: repeat(auto-fill, minmax(135px, 1fr)); }
+}
+
+/* En pantallas muy angostas, la barra buscar+escanear+vaciar+actualizar
+   no entra en una sola fila: el buscador pasa a ocupar toda la fila y
+   los 3 botones quedan debajo, repartidos en partes iguales. Así nunca
+   se recorta ni se esconde ningún botón. */
+@media (max-width: 460px) {
+  .catalog-toolbar {
+    flex-wrap: wrap;
+  }
+  #searchInput {
+    flex: 1 1 100%;
+  }
+  .catalog-toolbar .icon-btn,
+  .catalog-toolbar .refresh-btn {
+    flex: 1 1 0;
+    width: auto;
+  }
 }
 
 </style>
@@ -963,6 +996,9 @@ h2::before { content: '$ '; color: var(--accent); font-weight: 700; }
 </section>
 
 <section id="ticketView" class="view" hidden>
+  <div class="view-header">
+    <button id="ticketBackBtn" class="back-btn">← volver a editar el pedido</button>
+  </div>
   <div class="ticket">
     <div class="ticket-head">
       <span class="brand-mark">&gt;_</span>
@@ -2994,12 +3030,11 @@ function procesarCodigoEscaneado(codigoRaw) {
     aviso.style.color = 'var(--danger)';
     aviso.style.background = 'var(--danger-soft)';
     aviso.textContent = `Código ${codigo} no está en el catálogo`;
-    showToast('Código no encontrado');
     mostrarFlashScanner(false, `Código ${codigo} no encontrado`);
     return;
   }
 
-  addToCart(p.Pro_Id);
+  addToCart(p.Pro_Id, { toast: false });
   aviso.hidden = false;
   aviso.style.color = 'var(--success)';
   aviso.style.background = 'var(--success-soft)';
@@ -3051,13 +3086,28 @@ async function abrirScanner() {
     verbose: false
   });
 
-  const config = { fps: 10, qrbox: { width: 260, height: 160 } };
+  const config = {
+    fps: 10,
+    qrbox: { width: 260, height: 160 },
+    // más resolución + enfoque continuo = menos desenfoque al leer
+    // códigos de barras pequeños o de cerca.
+    videoConstraints: {
+      width: { ideal: 1280 },
+      height: { ideal: 720 },
+      advanced: [{ focusMode: 'continuous' }]
+    }
+  };
   const onSuccess = (decodedText) => procesarCodigoEscaneado(decodedText);
   const onFail = () => { /* fallo de lectura en un frame: se ignora, sigue intentando */ };
 
   try {
-    // 1er intento: cámara trasera (celular)
-    await html5Qrcode.start({ facingMode: { exact: 'environment' } }, config, onSuccess, onFail);
+    // 1er intento: cámara trasera (celular), con enfoque continuo
+    await html5Qrcode.start(
+      { facingMode: { exact: 'environment' }, advanced: [{ focusMode: 'continuous' }] },
+      config,
+      onSuccess,
+      onFail
+    );
     scannerActivo = true;
     return;
   } catch (err1) {
@@ -3111,12 +3161,12 @@ async function cerrarScanner() {
 
 /* ---------------- Carrito ---------------- */
 
-function addToCart(id) {
+function addToCart(id, opts) {
   cart[id] = (cart[id] || 0) + 1;
   persistCart();
   renderProductGrid();
   renderCartCount();
-  showToast('Añadido al pedido');
+  if (!opts || opts.toast !== false) showToast('Añadido al pedido');
 }
 
 function changeQty(id, delta) {
@@ -3646,6 +3696,31 @@ function resetToCatalog() {
   showView('catalogView');
 }
 
+// Si el cliente se olvidó de algo, permite volver desde la pantalla del
+// QR generado hacia el carrito con los mismos productos (y los mismos
+// datos de cliente/celular/NIT ya escritos), para seguir añadiendo y
+// volver a generar el código.
+function volverAEditarPedido() {
+  if (!ultimoTicket) { resetToCatalog(); return; }
+
+  cart = {};
+  ultimoTicket.items.forEach((it) => {
+    cart[it.RPedPro_Id] = it.Ped_Cantidad;
+  });
+  persistCart();
+  renderCartCount();
+
+  document.getElementById('clienteInput').value = ultimoTicket.Ven_Cliente || '';
+  document.getElementById('celularInput').value = ultimoTicket.Ven_Celular || '';
+  document.getElementById('nitInput').value = ultimoTicket.Ven_Nit || '';
+
+  ultimoTicket = null;
+  renderCart();
+  renderProductGrid();
+  showView('cartView');
+  showToast('Pedido restaurado, sigue añadiendo');
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   // aseguramos que siempre se arranque en el catálogo, nunca en el ticket
   // (por si el navegador restaura el estado de una sesión anterior)
@@ -3708,6 +3783,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('checkoutForm').addEventListener('submit', generarPedido);
 
   document.getElementById('saveTicketBtn').addEventListener('click', guardarPedido);
+  document.getElementById('ticketBackBtn').addEventListener('click', volverAEditarPedido);
   document.getElementById('discardTicketBtn').addEventListener('click', () => {
     ultimoTicket = null;
     resetToCatalog();
