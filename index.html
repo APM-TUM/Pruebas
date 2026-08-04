@@ -942,7 +942,6 @@ h2::before { content: '$ '; color: var(--accent); font-weight: 700; }
       </div>
     </div>
     <p id="scannerHint" class="scanner-hint">Apunta la cámara al código de barras del producto.</p>
-    <p id="scannerLastFound" class="scanner-last-found" hidden></p>
     <div class="scanner-manual">
       <input id="scannerManualInput" type="text" inputmode="numeric" placeholder="…o escribe el código manualmente" autocomplete="off">
       <button id="scannerManualBtn" class="ghost-btn">Añadir</button>
@@ -3031,30 +3030,19 @@ function procesarCodigoEscaneado(codigoRaw) {
   ultimoCodigoScanTs = ahora;
 
   const p = productos.find((x) => String(x.Pro_CodigoBarra || '').trim() === codigo);
-  const aviso = document.getElementById('scannerLastFound');
 
   if (!p) {
-    aviso.hidden = false;
-    aviso.style.color = 'var(--danger)';
-    aviso.style.background = 'var(--danger-soft)';
-    aviso.textContent = `Código ${codigo} no está en el catálogo`;
     mostrarFlashScanner(false, `Código ${codigo} no encontrado`);
     return;
   }
 
   addToCart(p.Pro_Id, { toast: false });
-  aviso.hidden = false;
-  aviso.style.color = 'var(--success)';
-  aviso.style.background = 'var(--success-soft)';
-  aviso.textContent = `✓ ${p.Pro_Descripcion} añadido`;
   mostrarFlashScanner(true, `${p.Pro_Descripcion} añadido al pedido`);
 }
 
 async function abrirScanner() {
   const modal = document.getElementById('scannerModal');
-  const aviso = document.getElementById('scannerLastFound');
   const hint = document.getElementById('scannerHint');
-  aviso.hidden = true;
   document.getElementById('scannerFlash').hidden = true;
   scannerPausado = false;
   modal.hidden = false;
