@@ -402,6 +402,28 @@ h2::before { content: '$ '; color: var(--accent); font-weight: 700; }
   margin-bottom: 10px;
 }
 
+.scanner-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.scanner-cart-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: #fff;
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 13px;
+}
+.scanner-cart-btn:active { transform: scale(0.94); }
+
 .scanner-close-btn {
   width: 30px;
   height: 30px;
@@ -426,6 +448,20 @@ h2::before { content: '$ '; color: var(--accent); font-weight: 700; }
   min-height: 220px;
 }
 .scanner-reader video { border-radius: 10px; }
+.scanner-reader.is-hidden { display: none; }
+
+.scanner-error-box {
+  width: 100%;
+  min-height: 120px;
+  border-radius: 10px;
+  background: var(--danger-soft);
+  border: 1px solid rgba(214,69,69,0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.scanner-error-box[hidden] { display: none; }
+.scanner-error-icon { font-size: 34px; line-height: 1; }
 
 .scanner-flash {
   position: absolute;
@@ -933,13 +969,21 @@ h2::before { content: '$ '; color: var(--accent); font-weight: 700; }
   <div class="scanner-box">
     <div class="scanner-head">
       <span>Escanear código de barras</span>
-      <button id="scannerCloseBtn" class="scanner-close-btn" aria-label="Cerrar escáner">×</button>
+      <div class="scanner-head-actions">
+        <button id="scannerCartBtn" class="scanner-cart-btn" aria-label="Ir al carrito">
+          🛒 <span id="scannerCartCount">0</span>
+        </button>
+        <button id="scannerCloseBtn" class="scanner-close-btn" aria-label="Cerrar escáner">×</button>
+      </div>
     </div>
     <div class="scanner-reader-wrap">
       <div id="scannerReader" class="scanner-reader"></div>
       <div id="scannerFlash" class="scanner-flash" hidden>
         <span id="scannerFlashIcon" class="scanner-flash-icon">✓</span>
         <span id="scannerFlashText" class="scanner-flash-text"></span>
+      </div>
+      <div id="scannerErrorBox" class="scanner-error-box" hidden>
+        <span class="scanner-error-icon">⚠️</span>
       </div>
     </div>
     <p id="scannerHint" class="scanner-hint">Apunta la cámara al código de barras del producto.</p>
@@ -3089,10 +3133,25 @@ function procesarCodigoEscaneado(codigoRaw, opciones = {}) {
   mostrarFlashScanner(true, `${p.Pro_Descripcion} añadido al pedido`);
 }
 
+// Oculta el recuadro negro de la cámara (que no sirve de nada si no hay
+// cámara) y muestra en su lugar una caja de error compacta, para no dejar
+// un rectángulo negro enorme y vacío en pantalla.
+function mostrarErrorScanner(mensaje) {
+  document.getElementById('scannerReader').classList.add('is-hidden');
+  document.getElementById('scannerErrorBox').hidden = false;
+  document.getElementById('scannerHint').textContent = mensaje;
+}
+
+function ocultarErrorScanner() {
+  document.getElementById('scannerReader').classList.remove('is-hidden');
+  document.getElementById('scannerErrorBox').hidden = true;
+}
+
 async function abrirScanner() {
   const modal = document.getElementById('scannerModal');
   const hint = document.getElementById('scannerHint');
   document.getElementById('scannerFlash').hidden = true;
+  ocultarErrorScanner();
   scannerPausado = false;
   bloqueoLecturaScanner = false;
   ultimoCodigoScan = null;
@@ -3106,19 +3165,19 @@ async function abrirScanner() {
   // (file:///...) o se sirve por http:// normal, el navegador bloquea
   // el acceso a la cámara sin mostrar ningún permiso.
   if (!window.isSecureContext) {
-    hint.textContent =
+    mostrarErrorScanner(
       'La cámara está bloqueada porque esta página no se abrió con HTTPS (o localhost). ' +
-      'Súbela a un hosting con https (GitHub Pages, Netlify, Firebase Hosting) o escribe el código manualmente.';
+      'Súbela a un hosting con https (GitHub Pages, Netlify, Firebase Hosting) o escribe el código manualmente.');
     return;
   }
 
   if (typeof Html5Qrcode === 'undefined') {
-    hint.textContent = 'No se pudo cargar el lector de cámara (revisa tu conexión a internet).';
+    mostrarErrorScanner('No se pudo cargar el lector de cámara (revisa tu conexión a internet).');
     return;
   }
 
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    hint.textContent = 'Este navegador no soporta acceso a la cámara. Prueba con Chrome o Safari actualizado.';
+    mostrarErrorScanner('Este navegador no soporta acceso a la cámara. Prueba con Chrome o Safari actualizado.');
     return;
   }
 
@@ -3215,7 +3274,7 @@ async function abrirScanner() {
     return;
   } catch (err2) {
     console.error('No se pudo iniciar ninguna cámara:', err2);
-    hint.textContent = mensajeErrorCamara(err2);
+    mostrarErrorScanner(mensajeErrorCamara(err2));
   }
 }
 
@@ -3309,7 +3368,10 @@ function cartItemCount() {
 }
 
 function renderCartCount() {
-  document.getElementById('cartCount').textContent = cartItemCount();
+  const n = cartItemCount();
+  document.getElementById('cartCount').textContent = n;
+  const scannerCount = document.getElementById('scannerCartCount');
+  if (scannerCount) scannerCount.textContent = n;
   renderCatalogCartBar();
 }
 
@@ -3845,6 +3907,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('scanBtn').addEventListener('click', abrirScanner);
   document.getElementById('scannerCloseBtn').addEventListener('click', cerrarScanner);
+  document.getElementById('scannerCartBtn').addEventListener('click', async () => {
+    await cerrarScanner();
+    renderCart();
+    showView('cartView');
+  });
   document.getElementById('scannerModal').addEventListener('click', (ev) => {
     if (ev.target.id === 'scannerModal') cerrarScanner();
   });
