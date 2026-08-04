@@ -393,6 +393,10 @@ h2::before { content: '$ '; color: var(--accent); font-weight: 700; }
 }
 .scanner-close-btn:active { transform: scale(0.94); }
 
+.scanner-reader-wrap {
+  position: relative;
+}
+
 .scanner-reader {
   width: 100%;
   border-radius: 10px;
@@ -401,6 +405,41 @@ h2::before { content: '$ '; color: var(--accent); font-weight: 700; }
   min-height: 220px;
 }
 .scanner-reader video { border-radius: 10px; }
+
+.scanner-flash {
+  position: absolute;
+  inset: 0;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  animation: scannerFlashPop 0.9s ease;
+}
+.scanner-flash[hidden] { display: none; }
+.scanner-flash.is-ok { background: rgba(27,138,90,0.92); }
+.scanner-flash.is-error { background: rgba(214,69,69,0.92); }
+
+.scanner-flash-icon {
+  font-size: 44px;
+  color: #fff;
+  line-height: 1;
+}
+.scanner-flash-text {
+  font-family: var(--mono);
+  font-size: 13.5px;
+  color: #fff;
+  text-align: center;
+  padding: 0 16px;
+}
+
+@keyframes scannerFlashPop {
+  0% { opacity: 0; }
+  15% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { opacity: 0; }
+}
 
 .scanner-hint {
   font-size: 12px;
@@ -776,7 +815,7 @@ h2::before { content: '$ '; color: var(--accent); font-weight: 700; }
   border-radius: 6px;
   font-family: var(--mono);
   font-size: 12.5px;
-  z-index: 50;
+  z-index: 200;
   box-shadow: 0 8px 24px rgba(0,0,0,0.25);
 }
 .toast::before { content: '> '; color: #fff; }
@@ -854,7 +893,13 @@ h2::before { content: '$ '; color: var(--accent); font-weight: 700; }
       <span>Escanear código de barras</span>
       <button id="scannerCloseBtn" class="scanner-close-btn" aria-label="Cerrar escáner">×</button>
     </div>
-    <div id="scannerReader" class="scanner-reader"></div>
+    <div class="scanner-reader-wrap">
+      <div id="scannerReader" class="scanner-reader"></div>
+      <div id="scannerFlash" class="scanner-flash" hidden>
+        <span id="scannerFlashIcon" class="scanner-flash-icon">✓</span>
+        <span id="scannerFlashText" class="scanner-flash-text"></span>
+      </div>
+    </div>
     <p id="scannerHint" class="scanner-hint">Apunta la cámara al código de barras del producto.</p>
     <p id="scannerLastFound" class="scanner-last-found" hidden></p>
     <div class="scanner-manual">
@@ -2871,19 +2916,73 @@ function escapeHtml(str) {
 
 let html5Qrcode = null;      // instancia del lector de cámara
 let scannerActivo = false;
+let scannerPausado = false;  // evita procesar lecturas mientras muestra el flash
 let ultimoCodigoScan = null; // evita añadir el mismo código 2 veces seguidas
 let ultimoCodigoScanTs = 0;
+let audioCtxScanner = null;
+
+// Sonido corto de confirmación (no depende de archivos externos).
+function reproducirBeep(exito) {
+  try {
+    if (!audioCtxScanner) {
+      audioCtxScanner = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    const ctx = audioCtxScanner;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = exito ? 880 : 220;
+    gain.gain.setValueAtTime(0.18, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.18);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.18);
+  } catch (e) { /* audio no disponible: se ignora, seguimos con flash + vibración */ }
+}
+
+// Muestra un flash grande de color a pantalla completa sobre la cámara,
+// imposible de pasar por alto, y pausa la lectura un momento para que el
+// mismo producto no se sume varias veces mientras sigue frente al lente.
+function mostrarFlashScanner(ok, texto) {
+  const flash = document.getElementById('scannerFlash');
+  const icon = document.getElementById('scannerFlashIcon');
+  const text = document.getElementById('scannerFlashText');
+
+  flash.hidden = false;
+  flash.className = 'scanner-flash ' + (ok ? 'is-ok' : 'is-error');
+  icon.textContent = ok ? '✓' : '✕';
+  text.textContent = texto;
+
+  reproducirBeep(ok);
+  if (navigator.vibrate) navigator.vibrate(ok ? 80 : [80, 60, 80]);
+
+  scannerPausado = true;
+  if (html5Qrcode && scannerActivo) {
+    try { html5Qrcode.pause(true); } catch (e) { /* ya pausado */ }
+  }
+
+  clearTimeout(mostrarFlashScanner._t);
+  mostrarFlashScanner._t = setTimeout(() => {
+    flash.hidden = true;
+    scannerPausado = false;
+    if (html5Qrcode && scannerActivo) {
+      try { html5Qrcode.resume(); } catch (e) { /* ya en marcha */ }
+    }
+  }, 1100);
+}
 
 // Busca el producto cuyo Pro_CodigoBarra coincida exactamente con lo
 // leído por la cámara (o escrito a mano) y lo añade al carrito.
 function procesarCodigoEscaneado(codigoRaw) {
+  if (scannerPausado) return; // ya estamos mostrando el flash de la lectura anterior
   const codigo = String(codigoRaw || '').trim();
   if (!codigo) return;
 
-  // evita duplicar si la cámara vuelve a leer el mismo código en menos
-  // de 2s (típico si el producto sigue frente al lente)
+  // evita duplicar si por alguna razón llega el mismo código 2 veces
+  // seguidas muy rápido (ej. al escribirlo manualmente)
   const ahora = Date.now();
-  if (codigo === ultimoCodigoScan && ahora - ultimoCodigoScanTs < 2000) return;
+  if (codigo === ultimoCodigoScan && ahora - ultimoCodigoScanTs < 1500) return;
   ultimoCodigoScan = codigo;
   ultimoCodigoScanTs = ahora;
 
@@ -2891,21 +2990,21 @@ function procesarCodigoEscaneado(codigoRaw) {
   const aviso = document.getElementById('scannerLastFound');
 
   if (!p) {
-    if (navigator.vibrate) navigator.vibrate(200);
     aviso.hidden = false;
     aviso.style.color = 'var(--danger)';
     aviso.style.background = 'var(--danger-soft)';
     aviso.textContent = `Código ${codigo} no está en el catálogo`;
     showToast('Código no encontrado');
+    mostrarFlashScanner(false, `Código ${codigo} no encontrado`);
     return;
   }
 
-  if (navigator.vibrate) navigator.vibrate(60);
   addToCart(p.Pro_Id);
   aviso.hidden = false;
   aviso.style.color = 'var(--success)';
   aviso.style.background = 'var(--success-soft)';
   aviso.textContent = `✓ ${p.Pro_Descripcion} añadido`;
+  mostrarFlashScanner(true, `${p.Pro_Descripcion} añadido al pedido`);
 }
 
 async function abrirScanner() {
@@ -2913,6 +3012,8 @@ async function abrirScanner() {
   const aviso = document.getElementById('scannerLastFound');
   const hint = document.getElementById('scannerHint');
   aviso.hidden = true;
+  document.getElementById('scannerFlash').hidden = true;
+  scannerPausado = false;
   modal.hidden = false;
   hint.textContent = 'Apunta la cámara al código de barras del producto.';
 
@@ -2995,6 +3096,8 @@ function mensajeErrorCamara(err) {
 
 async function cerrarScanner() {
   const modal = document.getElementById('scannerModal');
+  clearTimeout(mostrarFlashScanner._t);
+  scannerPausado = false;
   if (html5Qrcode && scannerActivo) {
     try {
       await html5Qrcode.stop();
