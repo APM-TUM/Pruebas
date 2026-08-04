@@ -242,7 +242,8 @@ h2::before { content: '$ '; color: var(--accent); font-weight: 700; }
 
 #searchInput {
   flex: 1;
-  padding: 11px 14px;
+  height: 44px;
+  padding: 0 14px;
   border-radius: var(--radius);
   border: 1px solid var(--line);
   background: var(--card);
@@ -254,7 +255,11 @@ h2::before { content: '$ '; color: var(--accent); font-weight: 700; }
   background: var(--card);
   color: var(--text-mute);
   border-radius: var(--radius);
-  padding: 0 14px;
+  padding: 0 16px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 13px;
   white-space: nowrap;
 }
@@ -310,7 +315,8 @@ h2::before { content: '$ '; color: var(--accent); font-weight: 700; }
 .icon-btn {
   position: relative;
   flex-shrink: 0;
-  width: 42px;
+  width: 44px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -320,7 +326,7 @@ h2::before { content: '$ '; color: var(--accent); font-weight: 700; }
   color: #9AA5B1;
   transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
 }
-.icon-btn svg { width: 18px; height: 18px; }
+.icon-btn svg { width: 19px; height: 19px; }
 .icon-btn:disabled { cursor: not-allowed; }
 .icon-btn:not(:disabled) {
   color: var(--danger);
@@ -352,10 +358,10 @@ h2::before { content: '$ '; color: var(--accent); font-weight: 700; }
 /* ---------- Escáner de código de barras ---------- */
 
 .scan-btn:not(:disabled) {
-  color: var(--success);
-  border-color: rgba(27,138,90,0.35);
+  color: var(--accent);
+  border-color: rgba(30,58,95,0.3);
 }
-.scan-btn:not(:disabled):hover { background-color: var(--success-soft); border-color: var(--success); }
+.scan-btn:not(:disabled):hover { background-color: var(--accent-soft); border-color: var(--accent); }
 .scan-btn:not(:disabled):active { transform: scale(0.94); }
 
 .scanner-modal {
@@ -846,6 +852,7 @@ h2::before { content: '$ '; color: var(--accent); font-weight: 700; }
 @media (max-width: 460px) {
   .catalog-toolbar {
     flex-wrap: wrap;
+    row-gap: 10px;
   }
   #searchInput {
     flex: 1 1 100%;
@@ -854,6 +861,7 @@ h2::before { content: '$ '; color: var(--accent); font-weight: 700; }
   .catalog-toolbar .refresh-btn {
     flex: 1 1 0;
     width: auto;
+    min-width: 0;
   }
 }
 
@@ -3086,29 +3094,25 @@ async function abrirScanner() {
     verbose: false
   });
 
-  const config = {
-    fps: 10,
-    qrbox: { width: 260, height: 160 },
-    // más resolución + enfoque continuo = menos desenfoque al leer
-    // códigos de barras pequeños o de cerca.
-    videoConstraints: {
-      width: { ideal: 1280 },
-      height: { ideal: 720 },
-      advanced: [{ focusMode: 'continuous' }]
-    }
-  };
+  const config = { fps: 10, qrbox: { width: 260, height: 160 } };
   const onSuccess = (decodedText) => procesarCodigoEscaneado(decodedText);
   const onFail = () => { /* fallo de lectura en un frame: se ignora, sigue intentando */ };
 
+  // NOTA: "videoConstraints" en la config de start() SOBREESCRIBE la
+  // cámara elegida (environment/user), por eso el enfoque se aplica
+  // DESPUES de iniciar, con applyVideoConstraints(), que no cambia de
+  // cámara. Va en try/catch porque no todos los celulares lo soportan.
+  function intentarEnfoqueContinuo() {
+    if (html5Qrcode && html5Qrcode.applyVideoConstraints) {
+      html5Qrcode.applyVideoConstraints({ advanced: [{ focusMode: 'continuous' }] }).catch(() => {});
+    }
+  }
+
   try {
-    // 1er intento: cámara trasera (celular), con enfoque continuo
-    await html5Qrcode.start(
-      { facingMode: { exact: 'environment' }, advanced: [{ focusMode: 'continuous' }] },
-      config,
-      onSuccess,
-      onFail
-    );
+    // 1er intento: cámara trasera (celular)
+    await html5Qrcode.start({ facingMode: { exact: 'environment' } }, config, onSuccess, onFail);
     scannerActivo = true;
+    intentarEnfoqueContinuo();
     return;
   } catch (err1) {
     console.warn('Cámara trasera no disponible, probando cualquier cámara:', err1);
@@ -3119,6 +3123,7 @@ async function abrirScanner() {
     // solo tienen cámara frontal, o si "environment" no existe)
     await html5Qrcode.start({ facingMode: 'user' }, config, onSuccess, onFail);
     scannerActivo = true;
+    intentarEnfoqueContinuo();
     return;
   } catch (err2) {
     console.error('No se pudo iniciar ninguna cámara:', err2);
