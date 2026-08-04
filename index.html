@@ -2963,12 +2963,37 @@ let scannerPausado = false;  // evita procesar lecturas mientras muestra el flas
 let ultimoCodigoScan = null; // último código sumado: no se vuelve a sumar mientras siga en cuadro
 let framesSinDeteccion = 0;  // frames seguidos en los que la cámara NO ve ningún código
 let audioCtxScanner = null;
+let watchdogPausaScanner = null; // red de seguridad: fuerza reanudar si algo deja la cámara pausada
 
 // Cuántos frames seguidos sin detectar nada asumimos como "el producto ya
 // se retiró de encuadre". Con fps:10 esto son ~0.8s de cámara sin ver
 // ningún código; suficientemente alto para no confundir con un frame
 // borroso momentáneo, pero suficientemente bajo para no sentirse lento.
 const FRAMES_PARA_LIBERAR_CODIGO = 8;
+
+// Tiempo máximo que la cámara puede quedar pausada antes de considerarla
+// "atascada" y reanudarla por la fuerza. En circunstancias normales el
+// flash dura 1100ms y la reanuda solo; esto es solo una red de seguridad
+// por si algún camino de código pausara la cámara sin programar su
+// reanudación (como pasaba antes con el bug de códigos duplicados: la
+// cámara se pausaba y, al ser duplicado, nunca se llegaba a reanudar).
+const MAX_MS_PAUSADO = 2500;
+
+// Programa (o reprograma) la reanudación forzada de la cámara. Se llama
+// cada vez que se pausa. Si la pausa termina de forma normal (flash de
+// 1100ms), esa misma reanudación normal cancela este temporizador antes
+// de que dispare; solo actúa si algo salió mal.
+function armarWatchdogPausa() {
+  clearTimeout(watchdogPausaScanner);
+  watchdogPausaScanner = setTimeout(() => {
+    if (scannerPausado && html5Qrcode && scannerActivo) {
+      console.warn('Escáner: la cámara quedó pausada más tiempo del normal; reanudando por seguridad.');
+      document.getElementById('scannerFlash').hidden = true;
+      scannerPausado = false;
+      try { html5Qrcode.resume(); } catch (e) { /* ya en marcha */ }
+    }
+  }, MAX_MS_PAUSADO);
+}
 
 // Sonido corto de confirmación (no depende de archivos externos).
 function reproducirBeep(exito) {
@@ -3010,11 +3035,13 @@ function mostrarFlashScanner(ok, texto) {
   if (html5Qrcode && scannerActivo) {
     try { html5Qrcode.pause(true); } catch (e) { /* ya pausado */ }
   }
+  armarWatchdogPausa();
 
   clearTimeout(mostrarFlashScanner._t);
   mostrarFlashScanner._t = setTimeout(() => {
     flash.hidden = true;
     scannerPausado = false;
+    clearTimeout(watchdogPausaScanner);
     if (html5Qrcode && scannerActivo) {
       try { html5Qrcode.resume(); } catch (e) { /* ya en marcha */ }
     }
@@ -3026,28 +3053,19 @@ function mostrarFlashScanner(ok, texto) {
 //
 // opciones.manual = true cuando viene del cuadro de texto (botón "Añadir"
 // o Enter): ahí SIEMPRE se procesa, porque es una acción explícita del
-// usuario y no hay riesgo de que la cámara "vea" el mismo código varias
-// veces seguidas.
+// usuario.
 //
-// Nota: el chequeo de "¿está pausado?" para las lecturas de cámara ya se
-// hace en el propio onSuccess (antes de llegar acá), así que aquí no se
-// repite: si esta función se está ejecutando para una lectura de cámara,
-// es porque ya se determinó que corresponde procesarla.
+// Nota: para lecturas de cámara, TODO el filtrado de duplicados y la
+// pausa ya se resolvieron en onSuccess ANTES de llamar a esta función
+// (por eso aquí no se repite). Esto es a propósito: si el chequeo de
+// duplicado se hiciera acá adentro, un código repetido terminaría en un
+// `return` después de que la cámara ya estaba pausada, sin llegar nunca a
+// mostrarFlashScanner() — que es quien programa la reanudación. Ese era
+// exactamente el bug que dejaba la cámara congelada para siempre tras la
+// segunda detección del mismo código.
 function procesarCodigoEscaneado(codigoRaw, opciones = {}) {
-  const manual = !!opciones.manual;
   const codigo = String(codigoRaw || '').trim();
   if (!codigo) return;
-
-  if (!manual) {
-    // Evita sumar el mismo código varias veces mientras el producto sigue
-    // frente a la cámara. Esto YA NO depende de un tiempo fijo: se
-    // mantiene bloqueado hasta que la cámara deje de ver cualquier
-    // código durante un momento (es decir, hasta que el producto
-    // realmente se retire de encuadre) o hasta que se lea un código
-    // distinto.
-    if (codigo === ultimoCodigoScan) return;
-    ultimoCodigoScan = codigo;
-  }
 
   const p = productos.find((x) => String(x.Pro_CodigoBarra || '').trim() === codigo);
 
@@ -3067,6 +3085,7 @@ async function abrirScanner() {
   scannerPausado = false;
   ultimoCodigoScan = null;
   framesSinDeteccion = 0;
+  clearTimeout(watchdogPausaScanner);
   modal.hidden = false;
   hint.textContent = 'Apunta la cámara al código de barras del producto.';
 
@@ -3114,16 +3133,34 @@ async function abrirScanner() {
   const config = { fps: 10, qrbox: { width: 260, height: 160 }, disableFlip: true };
   const onSuccess = (decodedText) => {
     framesSinDeteccion = 0; // la cámara sigue viendo un código: no lo demos por "retirado"
-    // Freno inmediato: apenas llega una lectura, bloqueamos y pausamos la
-    // cámara ANTES de hacer cualquier otra cosa (buscar el producto,
-    // sumarlo, etc.), para dejar la menor ventana posible a que la
-    // librería dispare otra lectura de este mismo cuadro.
+
+    // Si ya estamos procesando/mostrando el resultado de una lectura
+    // anterior, ignoramos cualquier lectura adicional hasta que termine.
     if (scannerPausado) return;
+
+    const codigo = String(decodedText || '').trim();
+    if (!codigo) return;
+
+    // Mismo código que ya sumamos y el producto sigue frente a la cámara:
+    // no hacemos NADA, ni pausamos ni mostramos el flash de nuevo. Este
+    // chequeo va ANTES de pausar a propósito — es la corrección del bug
+    // que dejaba la cámara congelada: antes se pausaba primero y recién
+    // después se descubría que era duplicado, y como se cortaba con un
+    // return, la cámara nunca se reanudaba. Ahora, si es duplicado, ni
+    // siquiera se toca la cámara: sigue viéndose en vivo.
+    if (codigo === ultimoCodigoScan) return;
+
+    // Código nuevo: lo marcamos YA (antes de seguir) para blindarnos
+    // contra un segundo frame casi simultáneo con el mismo código. El
+    // control físico de la cámara (pausar, reanudar y el watchdog de
+    // seguridad) vive en un único lugar, mostrarFlashScanner(), a la que
+    // procesarCodigoEscaneado() siempre termina llamando — así no hay dos
+    // sitios que puedan desincronizarse sobre si la cámara está pausada
+    // o no (esa desincronización fue justamente la causa del bug del
+    // congelamiento).
+    ultimoCodigoScan = codigo;
     scannerPausado = true;
-    if (html5Qrcode && scannerActivo) {
-      try { html5Qrcode.pause(true); } catch (e) { /* ya pausado */ }
-    }
-    procesarCodigoEscaneado(decodedText);
+    procesarCodigoEscaneado(codigo);
   };
   const onFail = () => {
     // fallo de lectura en un frame: no hay ningún código en cuadro.
@@ -3190,6 +3227,7 @@ function mensajeErrorCamara(err) {
 async function cerrarScanner() {
   const modal = document.getElementById('scannerModal');
   clearTimeout(mostrarFlashScanner._t);
+  clearTimeout(watchdogPausaScanner);
   scannerPausado = false;
   ultimoCodigoScan = null;
   framesSinDeteccion = 0;
