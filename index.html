@@ -198,6 +198,34 @@ input:focus-visible, button:focus-visible {
 .back-btn:hover { background-color: var(--accent-bright); border-color: var(--accent-bright); box-shadow: var(--shadow-primary-hover); }
 .back-btn:active { transform: scale(0.96); box-shadow: var(--shadow-primary); }
 
+.cart-view-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.scan-again-btn {
+  background: var(--card);
+  border: 1.5px solid var(--accent);
+  color: var(--accent);
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 13.5px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  box-shadow: var(--shadow-card);
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.15s ease;
+}
+.scan-again-btn svg { width: 16px; height: 16px; }
+.scan-again-btn:hover { background-color: var(--accent-soft); }
+.scan-again-btn:active { transform: scale(0.96); }
+
 h2 {
   font-family: var(--mono);
   font-size: 15px;
@@ -211,8 +239,9 @@ h2::before { content: '$ '; color: var(--accent); font-weight: 700; }
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+  margin-top: 6px;
 }
-.cart-title-row h2 { margin: 0; }
+.cart-title-row h2 { margin: 0; font-size: 19px; }
 
 .clear-cart-btn {
   border: 1px solid var(--line);
@@ -685,6 +714,42 @@ h2::before { content: '$ '; color: var(--accent); font-weight: 700; }
 
 .empty-msg { color: var(--text-mute); font-size: 14px; margin-top: 24px; text-align: center; }
 
+.cart-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 6px;
+  margin: 28px 0;
+  padding: 32px 20px;
+  background: var(--card);
+  border: 1.5px dashed var(--line);
+  border-radius: var(--radius);
+}
+.cart-empty-state[hidden] { display: none; }
+.cart-empty-icon { font-size: 40px; line-height: 1; margin-bottom: 4px; }
+.cart-empty-title { font-family: var(--mono); font-weight: 700; font-size: 16px; color: var(--text); margin: 0; }
+.cart-empty-sub { font-size: 13.5px; color: var(--text-mute); margin: 0 0 10px; max-width: 280px; }
+.cart-empty-scan-btn {
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  color: #fff;
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 13.5px;
+  padding: 12px 20px;
+  border-radius: 999px;
+  box-shadow: var(--shadow-primary);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+.cart-empty-scan-btn svg { width: 17px; height: 17px; }
+.cart-empty-scan-btn:hover { background-color: var(--accent-bright); box-shadow: var(--shadow-primary-hover); }
+.cart-empty-scan-btn:active { transform: scale(0.96); }
+
 #catalogView { padding-bottom: 24px; }
 
 /* ---------- Cart ---------- */
@@ -995,8 +1060,22 @@ h2::before { content: '$ '; color: var(--accent); font-weight: 700; }
 </div>
 
 <section id="cartView" class="view" hidden>
-  <div class="view-header">
+  <div class="view-header cart-view-header">
     <button class="back-btn" data-back="catalogView">← seguir viendo servicios</button>
+    <button id="cartScanBtn" class="scan-again-btn" aria-label="Escanear código de barras">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 7V5a2 2 0 0 1 2-2h2"/>
+        <path d="M17 3h2a2 2 0 0 1 2 2v2"/>
+        <path d="M21 17v2a2 2 0 0 1-2 2h-2"/>
+        <path d="M7 21H5a2 2 0 0 1-2-2v-2"/>
+        <line x1="6" y1="8" x2="6" y2="16"/>
+        <line x1="10" y1="8" x2="10" y2="16"/>
+        <line x1="13" y1="8" x2="13" y2="16"/>
+        <line x1="16" y1="8" x2="16" y2="16"/>
+        <line x1="19" y1="8" x2="19" y2="16"/>
+      </svg>
+      escanear
+    </button>
   </div>
   <div class="cart-title-row">
     <h2>Tu pedido</h2>
@@ -1012,7 +1091,25 @@ h2::before { content: '$ '; color: var(--accent); font-weight: 700; }
     </button>
   </div>
   <div id="cartItems" class="cart-items"></div>
-  <p id="cartEmptyMsg" class="empty-msg">Aún no añadiste ningún servicio.</p>
+  <div id="cartEmptyMsg" class="cart-empty-state">
+    <span class="cart-empty-icon">🛒</span>
+    <p class="cart-empty-title">Tu pedido está vacío</p>
+    <p class="cart-empty-sub">Escaneá un código de barras o buscá un servicio en el catálogo para empezar.</p>
+    <button id="cartEmptyScanBtn" class="cart-empty-scan-btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 7V5a2 2 0 0 1 2-2h2"/>
+        <path d="M17 3h2a2 2 0 0 1 2 2v2"/>
+        <path d="M21 17v2a2 2 0 0 1-2 2h-2"/>
+        <path d="M7 21H5a2 2 0 0 1-2-2v-2"/>
+        <line x1="6" y1="8" x2="6" y2="16"/>
+        <line x1="10" y1="8" x2="10" y2="16"/>
+        <line x1="13" y1="8" x2="13" y2="16"/>
+        <line x1="16" y1="8" x2="16" y2="16"/>
+        <line x1="19" y1="8" x2="19" y2="16"/>
+      </svg>
+      escanear código de barras
+    </button>
+  </div>
   <div class="cart-total-row">
     <span>Total</span>
     <strong id="cartTotal">Bs 0</strong>
@@ -3906,6 +4003,8 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   document.getElementById('scanBtn').addEventListener('click', abrirScanner);
+  document.getElementById('cartScanBtn').addEventListener('click', abrirScanner);
+  document.getElementById('cartEmptyScanBtn').addEventListener('click', abrirScanner);
   document.getElementById('scannerCloseBtn').addEventListener('click', cerrarScanner);
   document.getElementById('scannerCartBtn').addEventListener('click', async () => {
     await cerrarScanner();
