@@ -3028,19 +3028,23 @@ function mostrarFlashScanner(ok, texto) {
 // o Enter): ahí SIEMPRE se procesa, porque es una acción explícita del
 // usuario y no hay riesgo de que la cámara "vea" el mismo código varias
 // veces seguidas.
+//
+// Nota: el chequeo de "¿está pausado?" para las lecturas de cámara ya se
+// hace en el propio onSuccess (antes de llegar acá), así que aquí no se
+// repite: si esta función se está ejecutando para una lectura de cámara,
+// es porque ya se determinó que corresponde procesarla.
 function procesarCodigoEscaneado(codigoRaw, opciones = {}) {
   const manual = !!opciones.manual;
-  if (!manual && scannerPausado) return; // ya estamos mostrando el flash de la lectura anterior
   const codigo = String(codigoRaw || '').trim();
   if (!codigo) return;
 
   if (!manual) {
     // Evita sumar el mismo código varias veces mientras el producto sigue
-    // frente a la cámara. A diferencia de antes, esto YA NO depende de un
-    // tiempo fijo: se mantiene bloqueado hasta que la cámara deje de ver
-    // cualquier código durante un momento (es decir, hasta que el
-    // producto realmente se retire de encuadre) o hasta que se lea un
-    // código distinto.
+    // frente a la cámara. Esto YA NO depende de un tiempo fijo: se
+    // mantiene bloqueado hasta que la cámara deje de ver cualquier
+    // código durante un momento (es decir, hasta que el producto
+    // realmente se retire de encuadre) o hasta que se lea un código
+    // distinto.
     if (codigo === ultimoCodigoScan) return;
     ultimoCodigoScan = codigo;
   }
@@ -3100,9 +3104,25 @@ async function abrirScanner() {
     verbose: false
   });
 
-  const config = { fps: 10, qrbox: { width: 260, height: 160 } };
+  // fps: cuadros por segundo a intentar leer. disableFlip: true evita que
+  // la librería, ante un cuadro fallido, reintente con la imagen
+  // espejada — ese segundo intento interno es el sospechoso más probable
+  // del "doble OK instantáneo": dejaba el canvas con una transformación
+  // sin limpiar que podía producir una segunda lectura casi inmediata del
+  // mismo código. Para códigos de barra de producto (no códigos vistos en
+  // espejo) no lo necesitamos.
+  const config = { fps: 10, qrbox: { width: 260, height: 160 }, disableFlip: true };
   const onSuccess = (decodedText) => {
     framesSinDeteccion = 0; // la cámara sigue viendo un código: no lo demos por "retirado"
+    // Freno inmediato: apenas llega una lectura, bloqueamos y pausamos la
+    // cámara ANTES de hacer cualquier otra cosa (buscar el producto,
+    // sumarlo, etc.), para dejar la menor ventana posible a que la
+    // librería dispare otra lectura de este mismo cuadro.
+    if (scannerPausado) return;
+    scannerPausado = true;
+    if (html5Qrcode && scannerActivo) {
+      try { html5Qrcode.pause(true); } catch (e) { /* ya pausado */ }
+    }
     procesarCodigoEscaneado(decodedText);
   };
   const onFail = () => {
