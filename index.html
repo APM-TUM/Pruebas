@@ -2960,9 +2960,15 @@ function escapeHtml(str) {
 let html5Qrcode = null;      // instancia del lector de cámara
 let scannerActivo = false;
 let scannerPausado = false;  // evita procesar lecturas mientras muestra el flash
-let ultimoCodigoScan = null; // evita añadir el mismo código 2 veces seguidas
-let ultimoCodigoScanTs = 0;
+let ultimoCodigoScan = null; // último código sumado: no se vuelve a sumar mientras siga en cuadro
+let framesSinDeteccion = 0;  // frames seguidos en los que la cámara NO ve ningún código
 let audioCtxScanner = null;
+
+// Cuántos frames seguidos sin detectar nada asumimos como "el producto ya
+// se retiró de encuadre". Con fps:10 esto son ~0.8s de cámara sin ver
+// ningún código; suficientemente alto para no confundir con un frame
+// borroso momentáneo, pero suficientemente bajo para no sentirse lento.
+const FRAMES_PARA_LIBERAR_CODIGO = 8;
 
 // Sonido corto de confirmación (no depende de archivos externos).
 function reproducirBeep(exito) {
@@ -3017,17 +3023,27 @@ function mostrarFlashScanner(ok, texto) {
 
 // Busca el producto cuyo Pro_CodigoBarra coincida exactamente con lo
 // leído por la cámara (o escrito a mano) y lo añade al carrito.
-function procesarCodigoEscaneado(codigoRaw) {
-  if (scannerPausado) return; // ya estamos mostrando el flash de la lectura anterior
+//
+// opciones.manual = true cuando viene del cuadro de texto (botón "Añadir"
+// o Enter): ahí SIEMPRE se procesa, porque es una acción explícita del
+// usuario y no hay riesgo de que la cámara "vea" el mismo código varias
+// veces seguidas.
+function procesarCodigoEscaneado(codigoRaw, opciones = {}) {
+  const manual = !!opciones.manual;
+  if (!manual && scannerPausado) return; // ya estamos mostrando el flash de la lectura anterior
   const codigo = String(codigoRaw || '').trim();
   if (!codigo) return;
 
-  // evita duplicar si por alguna razón llega el mismo código 2 veces
-  // seguidas muy rápido (ej. al escribirlo manualmente)
-  const ahora = Date.now();
-  if (codigo === ultimoCodigoScan && ahora - ultimoCodigoScanTs < 1500) return;
-  ultimoCodigoScan = codigo;
-  ultimoCodigoScanTs = ahora;
+  if (!manual) {
+    // Evita sumar el mismo código varias veces mientras el producto sigue
+    // frente a la cámara. A diferencia de antes, esto YA NO depende de un
+    // tiempo fijo: se mantiene bloqueado hasta que la cámara deje de ver
+    // cualquier código durante un momento (es decir, hasta que el
+    // producto realmente se retire de encuadre) o hasta que se lea un
+    // código distinto.
+    if (codigo === ultimoCodigoScan) return;
+    ultimoCodigoScan = codigo;
+  }
 
   const p = productos.find((x) => String(x.Pro_CodigoBarra || '').trim() === codigo);
 
@@ -3045,6 +3061,8 @@ async function abrirScanner() {
   const hint = document.getElementById('scannerHint');
   document.getElementById('scannerFlash').hidden = true;
   scannerPausado = false;
+  ultimoCodigoScan = null;
+  framesSinDeteccion = 0;
   modal.hidden = false;
   hint.textContent = 'Apunta la cámara al código de barras del producto.';
 
@@ -3083,8 +3101,20 @@ async function abrirScanner() {
   });
 
   const config = { fps: 10, qrbox: { width: 260, height: 160 } };
-  const onSuccess = (decodedText) => procesarCodigoEscaneado(decodedText);
-  const onFail = () => { /* fallo de lectura en un frame: se ignora, sigue intentando */ };
+  const onSuccess = (decodedText) => {
+    framesSinDeteccion = 0; // la cámara sigue viendo un código: no lo demos por "retirado"
+    procesarCodigoEscaneado(decodedText);
+  };
+  const onFail = () => {
+    // fallo de lectura en un frame: no hay ningún código en cuadro.
+    // Tras varios frames seguidos así, asumimos que el producto ya se
+    // retiró y liberamos el último código para permitir volver a leerlo
+    // (a él mismo o a otro).
+    framesSinDeteccion++;
+    if (framesSinDeteccion >= FRAMES_PARA_LIBERAR_CODIGO) {
+      ultimoCodigoScan = null;
+    }
+  };
 
   // NOTA: "videoConstraints" en la config de start() SOBREESCRIBE la
   // cámara elegida (environment/user), por eso el enfoque se aplica
@@ -3141,6 +3171,8 @@ async function cerrarScanner() {
   const modal = document.getElementById('scannerModal');
   clearTimeout(mostrarFlashScanner._t);
   scannerPausado = false;
+  ultimoCodigoScan = null;
+  framesSinDeteccion = 0;
   if (html5Qrcode && scannerActivo) {
     try {
       await html5Qrcode.stop();
@@ -3747,7 +3779,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const enviarCodigoManual = () => {
     const input = document.getElementById('scannerManualInput');
-    procesarCodigoEscaneado(input.value);
+    procesarCodigoEscaneado(input.value, { manual: true });
     input.value = '';
     input.focus();
   };
