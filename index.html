@@ -201,6 +201,48 @@
   }
   .brand-dot{ width:8px; height:8px; border-radius:50%; background:var(--laser); box-shadow: 0 0 10px 2px var(--laser-soft); }
 
+  .topbar-actions{
+    display:flex; align-items:center; gap:10px;
+  }
+  #refreshCatBtn{
+    width:44px; height:44px; border-radius:14px;
+    background: var(--surface);
+    border:1px solid var(--line);
+    display:flex; align-items:center; justify-content:center;
+    color: var(--text-muted);
+    transition: transform .12s ease;
+  }
+  #refreshCatBtn svg{ width:20px; height:20px; }
+  #refreshCatBtn:active{ transform: scale(.9); }
+  #refreshCatBtn.spinning svg{ animation: spin .8s linear infinite; color: var(--amber); }
+  @keyframes spin{ to{ transform: rotate(360deg); } }
+
+  /* ---------- PULL TO REFRESH ---------- */
+  .pull-indicator{
+    position:absolute;
+    left:0; right:0; top:0;
+    display:flex; align-items:center; justify-content:center; gap:10px;
+    padding-top: max(14px, var(--safe-t));
+    height: 70px;
+    transform: translateY(-100%);
+    opacity:0;
+    z-index:15;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-muted);
+    pointer-events:none;
+  }
+  .pull-indicator.dragging{ transition:none; }
+  .pull-indicator.snap{ transition: transform .22s ease, opacity .22s ease; }
+  .pull-indicator .pull-spinner{
+    width:16px; height:16px; border-radius:50%;
+    border: 2px solid var(--line);
+    border-top-color: var(--amber);
+    flex-shrink:0;
+  }
+  .pull-indicator.ready .pull-spinner{ border-top-color: var(--ok); }
+  .pull-indicator.loading .pull-spinner{ animation: spin .7s linear infinite; }
+
   .cart-badge-btn{
     position:relative;
     width:52px; height:52px;
@@ -677,16 +719,28 @@
 
   <!-- ================= SCANNER ================= -->
   <div id="scanner" class="screen scanner hidden">
+    <div id="pullIndicator" class="pull-indicator">
+      <span class="pull-spinner"></span>
+      <span id="pullIndicatorText">Suelta para actualizar</span>
+    </div>
     <div class="topbar">
       <div class="brand"><span class="brand-dot"></span>CreadorQR</div>
-      <button id="cartBadgeBtn" class="cart-badge-btn" aria-label="Ver mi carrito">
-        <svg viewBox="0 0 24 24" fill="none" stroke="var(--text)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="9" cy="21" r="1.4" fill="var(--text)" stroke="none"/>
-          <circle cx="18" cy="21" r="1.4" fill="var(--text)" stroke="none"/>
-          <path d="M2.5 3h2.4l2.1 11.4a2 2 0 0 0 2 1.6h8.3a2 2 0 0 0 2-1.6L21 7H6"/>
-        </svg>
-        <span id="cartBadgeCount" class="badge">0</span>
-      </button>
+      <div class="topbar-actions">
+        <button id="refreshCatBtn" class="icon-nav-btn" aria-label="Actualizar catálogo" title="Actualizar catálogo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M23 4v6h-6"/><path d="M1 20v-6h6"/>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+          </svg>
+        </button>
+        <button id="cartBadgeBtn" class="cart-badge-btn" aria-label="Ver mi carrito">
+          <svg viewBox="0 0 24 24" fill="none" stroke="var(--text)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="9" cy="21" r="1.4" fill="var(--text)" stroke="none"/>
+            <circle cx="18" cy="21" r="1.4" fill="var(--text)" stroke="none"/>
+            <path d="M2.5 3h2.4l2.1 11.4a2 2 0 0 0 2 1.6h8.3a2 2 0 0 0 2-1.6L21 7H6"/>
+          </svg>
+          <span id="cartBadgeCount" class="badge">0</span>
+        </button>
+      </div>
     </div>
 
     <div class="mode-toggle">
@@ -2527,6 +2581,9 @@ var qrcode = function() {
   var ultimaCompra = null; // último payload generado, para poder editar/guardar
 
   var catalogStatus = document.getElementById('catalogStatus');
+  var refreshCatBtn = document.getElementById('refreshCatBtn');
+  var pullIndicator = document.getElementById('pullIndicator');
+  var pullIndicatorText = document.getElementById('pullIndicatorText');
   var scanToast = document.getElementById('scanToast');
   var scanToastTimer = null;
 
@@ -2549,10 +2606,10 @@ var qrcode = function() {
 
     if (!API_URL || API_URL.indexOf('PEGA_AQUI') !== -1){
       if (!productos.length) setCatalogStatus('Catálogo no configurado (falta API_URL)');
-      return;
+      return Promise.resolve();
     }
 
-    fetch(API_URL, { cache: 'no-store' })
+    return fetch(API_URL, { cache: 'no-store' })
       .then(function(res){ return res.json(); })
       .then(function(data){
         if (data && data.ok && Array.isArray(data.productos)){
@@ -2584,6 +2641,101 @@ var qrcode = function() {
   function setCatalogStatus(text){
     catalogStatus.textContent = text;
   }
+
+  // ---------- Actualizar catálogo: botón + gesto de "arrastrar hacia abajo" ----------
+  // La app corre con el body fijo (position:fixed) para comportarse como una
+  // app de pantalla completa y no pelear con el visor de la cámara al tocar
+  // la pantalla; eso, sin embargo, desactiva el "pull to refresh" nativo del
+  // navegador. Por eso se ofrecen dos formas explícitas de actualizar: el
+  // botón ↻ de la barra superior y un gesto propio de arrastre hacia abajo.
+  var MIN_REFRESH_MS = 550;
+  var actualizandoCatalogo = false;
+
+  function actualizarCatalogo(){
+    if (actualizandoCatalogo) return Promise.resolve();
+    actualizandoCatalogo = true;
+    refreshCatBtn.classList.add('spinning');
+    var inicio = Date.now();
+    return Promise.resolve(cargarCatalogo()).then(function(){
+      var espera = MIN_REFRESH_MS - (Date.now() - inicio);
+      return new Promise(function(r){ setTimeout(r, Math.max(0, espera)); });
+    }).finally(function(){
+      actualizandoCatalogo = false;
+      refreshCatBtn.classList.remove('spinning');
+    });
+  }
+
+  refreshCatBtn.addEventListener('click', function(){
+    vibrate(10);
+    actualizarCatalogo();
+  });
+
+  // ---- Gesto de arrastrar hacia abajo (pull to refresh) ----
+  var PULL_THRESHOLD = 68;
+  var PULL_MAX = 110;
+  var pullStartY = null;
+  var pullDist = 0;
+  var pullActive = false;
+
+  function pullZonaValida(target){
+    // Solo se activa si el gesto empieza en la parte de arriba (marca,
+    // barra de modo, texto de estado) y nunca sobre la cámara, el teclado
+    // manual o los botones, para no interferir con esos controles.
+    if (target.closest('#reader') || target.closest('.manual-panel') ||
+        target.closest('#cartBadgeBtn') || target.closest('#refreshCatBtn')) return false;
+    return !!target.closest('.topbar') || !!target.closest('.mode-toggle') || !!target.closest('.catalog-status') || target.id === 'scanner';
+  }
+
+  scanner.addEventListener('touchstart', function(e){
+    if (scanner.classList.contains('hidden') || e.touches.length !== 1) return;
+    if (!pullZonaValida(e.target)) return;
+    pullStartY = e.touches[0].clientY;
+    pullActive = true;
+    pullIndicator.classList.remove('snap');
+    pullIndicator.classList.add('dragging');
+  }, { passive: true });
+
+  scanner.addEventListener('touchmove', function(e){
+    if (!pullActive || pullStartY == null || actualizandoCatalogo) return;
+    var diff = e.touches[0].clientY - pullStartY;
+    if (diff <= 0){ pullDist = 0; pullIndicator.style.transform = 'translateY(-100%)'; pullIndicator.style.opacity = 0; return; }
+    pullDist = Math.min(diff, PULL_MAX);
+    var progreso = pullDist / PULL_THRESHOLD;
+    pullIndicator.style.transform = 'translateY(' + (progreso >= 1 ? 0 : (progreso - 1) * 100) + '%)';
+    pullIndicator.style.opacity = Math.min(progreso, 1);
+    var listo = pullDist >= PULL_THRESHOLD;
+    pullIndicator.classList.toggle('ready', listo);
+    pullIndicatorText.textContent = listo ? 'Suelta para actualizar' : 'Desliza para actualizar';
+  }, { passive: true });
+
+  function finalizarPull(){
+    if (!pullActive) return;
+    pullActive = false;
+    pullIndicator.classList.remove('dragging');
+    pullIndicator.classList.add('snap');
+
+    if (pullDist >= PULL_THRESHOLD){
+      vibrate(12);
+      pullIndicator.classList.add('loading');
+      pullIndicatorText.textContent = 'Actualizando catálogo…';
+      pullIndicator.style.transform = 'translateY(0%)';
+      pullIndicator.style.opacity = 1;
+      actualizarCatalogo().then(function(){
+        pullIndicator.classList.remove('loading', 'ready');
+        pullIndicator.style.transform = 'translateY(-100%)';
+        pullIndicator.style.opacity = 0;
+        showToast(true, 'Catálogo actualizado');
+      });
+    } else {
+      pullIndicator.style.transform = 'translateY(-100%)';
+      pullIndicator.style.opacity = 0;
+    }
+    pullStartY = null;
+    pullDist = 0;
+  }
+
+  scanner.addEventListener('touchend', finalizarPull);
+  scanner.addEventListener('touchcancel', finalizarPull);
 
   window.addEventListener('online', function(){ cargarCatalogo(); });
 
