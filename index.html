@@ -3303,7 +3303,7 @@ var qrcode = function() {
     feedback(true, p.Pro_Descripcion + ' añadido');
   }
 
-  // Quita SOLO una unidad de un producto (usada desde el popup del botón −).
+  // Quita SOLO una unidad de un producto (usada desde el botón −).
   // Si la cantidad llega a 0, la fila desaparece del carrito.
   function removeOneUnit(id){
     var item = null, idx = -1;
@@ -3312,6 +3312,18 @@ var qrcode = function() {
     item.qty = (item.qty || 1) - 1;
     if (item.qty <= 0) cart.splice(idx, 1);
     renderCart();
+    vibrate(15);
+  }
+
+  // Suma directamente una unidad más de un producto ya en el carrito
+  // (usada desde el botón +), sin necesidad de volver a escanear.
+  function addOneUnit(id){
+    var item = null;
+    for (var i=0; i<cart.length; i++){ if (cart[i].id === id){ item = cart[i]; break; } }
+    if (!item) return;
+    item.qty = (item.qty || 1) + 1;
+    renderCart();
+    bumpBadge();
     vibrate(15);
   }
 
@@ -3379,11 +3391,11 @@ var qrcode = function() {
           '<span class="code">' + escapeHtml(it.name || it.code) + '</span>' +
           '<span class="price">' + escapeHtml(money(subtotal)) + '</span>' +
           '<div class="qty-stepper">' +
-            '<button class="qty-btn minus" aria-label="Ver/quitar unidades" data-minus="' + escapeHtml(it.id) + '">' +
+            '<button class="qty-btn minus" aria-label="Restar unidad" data-minus="' + escapeHtml(it.id) + '">' +
               '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12h14"/></svg>' +
             '</button>' +
             '<span class="qty-badge">×' + qty + '</span>' +
-            '<button class="qty-btn plus" aria-label="Escanear otra unidad" data-plus="' + escapeHtml(it.id) + '">' +
+            '<button class="qty-btn plus" aria-label="Sumar unidad" data-plus="' + escapeHtml(it.id) + '">' +
               '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>' +
             '</button>' +
           '</div>' +
@@ -3395,14 +3407,14 @@ var qrcode = function() {
     for (var p=0; p<plusBtns.length; p++){
       plusBtns[p].addEventListener('click', function(e){
         e.stopPropagation();
-        scanMoreOfProduct(this.getAttribute('data-plus'));
+        addOneUnit(this.getAttribute('data-plus'));
       });
     }
     var minusBtns = cartList.querySelectorAll('[data-minus]');
     for (var m=0; m<minusBtns.length; m++){
       minusBtns[m].addEventListener('click', function(e){
         e.stopPropagation();
-        openUnitsPopup(this.getAttribute('data-minus'));
+        removeOneUnit(this.getAttribute('data-minus'));
       });
     }
   }
