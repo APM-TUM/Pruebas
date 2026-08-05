@@ -243,27 +243,48 @@
   .pull-indicator.ready .pull-spinner{ border-top-color: var(--ok); }
   .pull-indicator.loading .pull-spinner{ animation: spin .7s linear infinite; }
 
-  .cart-badge-btn{
-    position:relative;
-    width:52px; height:52px;
-    border-radius:16px;
+  /* ---------- Barra inferior fija: apagar cámara + carrito ---------- */
+  /* Ambos botones grandes y a la altura del pulgar, para no tener que
+     estirar la mano hasta arriba mientras se escanea. */
+  .bottom-actions{
+    flex-shrink:0;
+    display:flex;
+    gap:12px;
+    padding: 14px 20px max(14px, var(--safe-b));
+  }
+  .action-btn{
+    flex:1;
+    height:60px;
+    border-radius:20px;
+    display:flex; align-items:center; justify-content:center; gap:9px;
     background: var(--surface);
     border:1px solid var(--line);
-    display:flex; align-items:center; justify-content:center;
-    transition: transform .12s ease;
+    color: var(--text);
+    font-family: var(--font-display); font-weight:600; font-size:14.5px;
+    transition: transform .12s ease, background .15s ease, border-color .15s ease, color .15s ease;
   }
-  .cart-badge-btn:active{ transform: scale(.9); }
-  .cart-badge-btn svg{ width:26px; height:26px; }
-  .cart-badge-btn .badge{
-    position:absolute; top:-6px; right:-6px;
+  .action-btn:active{ transform: scale(.96); }
+  .action-btn svg{ width:22px; height:22px; flex-shrink:0; }
+
+  .cam-toggle-btn{ color: var(--text-muted); }
+  .cam-toggle-btn.off{ color: var(--laser); border-color: var(--laser-soft); background: rgba(255,90,54,.08); }
+
+  .cart-action-btn{
+    position:relative;
+    background: linear-gradient(160deg, var(--surface-raised), var(--surface));
+    color: var(--amber);
+    border-color: var(--amber-soft);
+  }
+  .cart-action-btn .badge{
+    position:absolute; top:-6px; right:14px;
     min-width:22px; height:22px; padding:0 5px;
     border-radius:11px; background:var(--amber); color:#1a1200;
     font-family: var(--font-display); font-weight:700; font-size:12px;
     display:flex; align-items:center; justify-content:center;
     transform: scale(0); transition: transform .18s cubic-bezier(.3,1.6,.4,1);
   }
-  .cart-badge-btn .badge.show{ transform:scale(1); }
-  .cart-badge-btn.bump{ animation: bump .3s ease; }
+  .cart-action-btn .badge.show{ transform:scale(1); }
+  .cart-action-btn.bump{ animation: bump .3s ease; }
   @keyframes bump{ 0%,100%{transform:scale(1);} 40%{ transform:scale(1.18); } }
 
   .mode-toggle{
@@ -293,18 +314,23 @@
     padding: 0 20px;
     display:flex;
     flex-direction:column;
+    justify-content:center;
   }
 
   /* camera viewfinder */
   .viewfinder{
     position:relative;
-    flex:1;
+    width:100%;
+    flex:0 1 auto;
     min-height: 220px;
+    max-height: 52vh;
+    aspect-ratio: 3 / 4;
     border-radius: var(--radius-lg);
     background: var(--surface);
     overflow:hidden;
     display:flex; align-items:center; justify-content:center;
     border: 1px solid var(--line);
+    margin: 0 auto;
   }
   #reader{ position:absolute; inset:0; }
   #reader video{ width:100% !important; height:100% !important; object-fit:cover; }
@@ -984,14 +1010,6 @@
             <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
           </svg>
         </button>
-        <button id="cartBadgeBtn" class="cart-badge-btn" aria-label="Ver mi carrito">
-          <svg viewBox="0 0 24 24" fill="none" stroke="var(--text)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="9" cy="21" r="1.4" fill="var(--text)" stroke="none"/>
-            <circle cx="18" cy="21" r="1.4" fill="var(--text)" stroke="none"/>
-            <path d="M2.5 3h2.4l2.1 11.4a2 2 0 0 0 2 1.6h8.3a2 2 0 0 0 2-1.6L21 7H6"/>
-          </svg>
-          <span id="cartBadgeCount" class="badge">0</span>
-        </button>
       </div>
     </div>
 
@@ -1046,6 +1064,25 @@
           </button>
         </div>
       </div>
+    </div>
+
+    <div class="bottom-actions">
+      <button id="camToggleBtn" class="action-btn cam-toggle-btn" aria-label="Apagar cámara">
+        <svg id="camToggleIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+          <circle cx="12" cy="13" r="4"/>
+        </svg>
+        <span id="camToggleLabel">Apagar cámara</span>
+      </button>
+      <button id="cartBadgeBtn" class="action-btn cart-action-btn" aria-label="Ver mi carrito">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="9" cy="21" r="1.4" fill="currentColor" stroke="none"/>
+          <circle cx="18" cy="21" r="1.4" fill="currentColor" stroke="none"/>
+          <path d="M2.5 3h2.4l2.1 11.4a2 2 0 0 0 2 1.6h8.3a2 2 0 0 0 2-1.6L21 7H6"/>
+        </svg>
+        <span>Carrito</span>
+        <span id="cartBadgeCount" class="badge">0</span>
+      </button>
     </div>
   </div>
 
@@ -2875,6 +2912,9 @@ var qrcode = function() {
 
   var modeCameraBtn = document.getElementById('modeCameraBtn');
   var modeKeyboardBtn = document.getElementById('modeKeyboardBtn');
+  var camToggleBtn = document.getElementById('camToggleBtn');
+  var camToggleIcon = document.getElementById('camToggleIcon');
+  var camToggleLabel = document.getElementById('camToggleLabel');
   var cameraPanel = document.getElementById('cameraPanel');
   var manualPanel = document.getElementById('manualPanel');
   var camFallback = document.getElementById('camFallback');
@@ -3147,6 +3187,9 @@ var qrcode = function() {
   });
 
   // ---------- Mode toggle ----------
+  var CAM_ICON_ON = '<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>';
+  var CAM_ICON_OFF = '<path d="M1 1l22 22"/><path d="M21 21H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h4"/><path d="M14.5 6l1.5 3H21a2 2 0 0 1 2 2v9.34"/><circle cx="12" cy="13" r="4"/>';
+
   function setMode(mode){
     if (mode === 'camera'){
       modeCameraBtn.classList.add('selected');
@@ -3154,6 +3197,10 @@ var qrcode = function() {
       cameraPanel.classList.remove('hidden');
       manualPanel.classList.add('hidden');
       startCamera();
+      camToggleBtn.classList.remove('off');
+      camToggleIcon.innerHTML = CAM_ICON_ON;
+      camToggleLabel.textContent = 'Apagar cámara';
+      camToggleBtn.setAttribute('aria-label', 'Apagar cámara');
     } else {
       modeKeyboardBtn.classList.add('selected');
       modeCameraBtn.classList.remove('selected');
@@ -3161,10 +3208,18 @@ var qrcode = function() {
       cameraPanel.classList.add('hidden');
       stopCamera();
       setTimeout(function(){ manualInput.focus(); }, 50);
+      camToggleBtn.classList.add('off');
+      camToggleIcon.innerHTML = CAM_ICON_OFF;
+      camToggleLabel.textContent = 'Activar cámara';
+      camToggleBtn.setAttribute('aria-label', 'Activar cámara');
     }
   }
   modeCameraBtn.addEventListener('click', function(){ setMode('camera'); });
   modeKeyboardBtn.addEventListener('click', function(){ setMode('keyboard'); });
+  camToggleBtn.addEventListener('click', function(){
+    vibrate(10);
+    setMode(modeCameraBtn.classList.contains('selected') ? 'keyboard' : 'camera');
+  });
 
   // ---------- Camera ----------
   function startCamera(){
