@@ -578,7 +578,17 @@
   .primary-btn:active{ transform: scale(.97); }
   .primary-btn:disabled{ opacity:.35; box-shadow:none; }
 
-  /* ---------- QR SCREEN (estilo recibo/comprobante) ---------- */
+  /* ---------- CHECKOUT SCREEN (misma identidad oscura/naranja de la app) ---------- */
+  .checkout-screen{
+    background:
+      radial-gradient(ellipse 70% 40% at 50% 0%, var(--bg-soft), transparent 65%),
+      var(--bg);
+    opacity:0; transform: translateY(10px);
+    transition: opacity .35s ease, transform .35s ease;
+  }
+  .checkout-screen.active{ opacity:1; transform:none; }
+
+  /* ---------- QR SCREEN (estilo recibo/comprobante, se mantiene claro a propósito) ---------- */
   .qr-screen{
     background: #F1F3F7;
     opacity:0; transform: translateY(10px);
@@ -713,30 +723,30 @@
   /* ---------- CHECKOUT (datos del cliente) ---------- */
   .checkout-body{
     flex:1; min-height:0; overflow-y:auto;
-    padding: 6px 20px 20px;
-    display:flex; flex-direction:column; gap:16px;
+    padding: 10px 20px 20px;
+    display:flex; flex-direction:column; gap:18px;
   }
   .checkout-hint{
-    margin:2px 0 0;
+    margin:0;
     font-size:13px; line-height:1.5;
     color: var(--text-muted);
   }
   .form-field{
-    display:flex; flex-direction:column; gap:8px;
+    display:flex; flex-direction:column; gap:9px;
   }
   .form-field label{
-    font-size:13px; color: var(--text-muted);
+    font-size:13.5px; font-weight:600; color: var(--text-muted);
   }
-  .form-field label .opt{ opacity:.7; font-size:11.5px; }
+  .form-field label .opt{ opacity:.65; font-weight:400; font-size:12px; }
   .form-field input{
-    height:52px;
+    height:58px;
     background: var(--surface);
     border: 1.5px solid var(--line);
-    border-radius: 16px;
-    padding: 0 16px;
+    border-radius: 18px;
+    padding: 0 18px;
     color: var(--text);
     font-family: var(--font-body);
-    font-size:15px;
+    font-size:16px;
     outline:none;
     transition: border-color .15s ease;
   }
@@ -744,17 +754,17 @@
   .form-field input:focus{ border-color: var(--amber); }
   .checkout-summary-row{
     display:flex; align-items:center; justify-content:space-between;
-    background: var(--surface);
+    background: var(--surface-raised);
     border: 1px solid var(--line);
-    border-radius: 16px;
-    padding: 14px 16px;
+    border-radius: 18px;
+    padding: 18px 18px;
     font-family: var(--font-mono);
-    font-size: 12.5px;
+    font-size: 13px;
     color: var(--text-muted);
-    margin-top:4px;
+    margin-top:2px;
   }
   .checkout-summary-row strong{
-    font-family: var(--font-display); font-weight:700; font-size:16px;
+    font-family: var(--font-display); font-weight:700; font-size:21px;
     color: var(--amber);
   }
 
@@ -950,7 +960,7 @@
   </div>
 
   <!-- ================= DATOS DEL CLIENTE (antes de generar el QR) ================= -->
-  <div id="checkoutScreen" class="screen qr-screen hidden">
+  <div id="checkoutScreen" class="screen checkout-screen hidden">
     <div class="topbar">
       <button id="checkoutBackBtn" class="icon-nav-btn" aria-label="Volver al carrito">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
@@ -966,7 +976,7 @@
     </div>
 
     <div class="checkout-body">
-      <p class="checkout-hint">Estos datos son opcionales, pero quedarán guardados dentro del código QR junto a tus productos.</p>
+      <p class="checkout-hint">Opcional — quedan guardados en tu código QR.</p>
 
       <div class="form-field">
         <label>Nombre <span class="opt">(opcional)</span></label>
