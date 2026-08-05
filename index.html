@@ -430,37 +430,27 @@ h2::before { content: '$ '; color: var(--accent); font-weight: 700; }
 .scan-cta-text strong { font-size: 15.5px; font-weight: 700; }
 .scan-cta-text small { font-size: 12px; color: rgba(255,255,255,0.78); }
 
-/* Estado inicial de la pantalla principal: reemplaza a la grilla de
-   productos hasta que el usuario busque, elija una categoría, o pida
-   ver todo el catálogo explícitamente. Mantiene la pantalla liviana y
-   evita el scroll largo típico de listas de catálogo en el celular. */
-.catalog-hero {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: 6px;
-  background: var(--card);
-  border: 1px dashed var(--line);
-  border-radius: var(--radius);
-  padding: 30px 20px;
-  margin-top: 6px;
-}
-.catalog-hero-icon { font-size: 26px; opacity: 0.6; }
-.catalog-hero-title { font-size: 14.5px; font-weight: 700; color: var(--text); margin: 4px 0 0; }
-.catalog-hero-sub { font-size: 12.5px; color: var(--text-mute); max-width: 320px; line-height: 1.45; margin: 0; }
-.show-catalog-btn {
-  margin-top: 10px;
-  border: 1px solid var(--line);
-  background: var(--bg);
+.search-btn:not(:disabled) {
   color: var(--accent);
-  font-family: var(--mono);
-  font-weight: 600;
-  font-size: 12.5px;
-  padding: 9px 16px;
-  border-radius: 999px;
+  border-color: rgba(30,58,95,0.3);
 }
-.show-catalog-btn:active { transform: scale(0.96); }
+.search-btn:not(:disabled):hover { background-color: var(--accent-soft); border-color: var(--accent); }
+.search-btn:not(:disabled):active { transform: scale(0.94); }
+
+.search-hint {
+  font-size: 12px;
+  color: var(--text-mute);
+  margin: 8px 2px 2px;
+}
+
+/* Contenedor del único resultado de la búsqueda por código. A propósito
+   no es una grilla: solo debe mostrarse el producto encontrado, nunca
+   un listado del catálogo completo. */
+.code-result {
+  margin-top: 14px;
+  max-width: 360px;
+}
+.code-result .product-card { width: 100%; }
 
 .scanner-modal {
   position: fixed;
@@ -628,43 +618,6 @@ h2::before { content: '$ '; color: var(--accent); font-weight: 700; }
   border: 1px solid var(--line);
   background: var(--bg);
   font-size: 14px;
-}
-
-.category-tabs {
-  display: flex;
-  gap: 8px;
-  overflow-x: auto;
-  padding: 2px 2px 6px;
-  margin-top: 4px;
-  scrollbar-width: none;
-}
-.category-tabs::-webkit-scrollbar { display: none; }
-
-.category-tab {
-  flex-shrink: 0;
-  border: 1px solid var(--line);
-  background: var(--card);
-  color: var(--text-mute);
-  font-family: var(--mono);
-  border-radius: 8px;
-  padding: 8px 16px;
-  font-size: 13px;
-  font-weight: 600;
-  white-space: nowrap;
-  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
-}
-.category-tab.active {
-  background: var(--accent);
-  color: #ffffff;
-  border-color: var(--accent);
-  box-shadow: 0 2px 6px rgba(30,58,95,0.35);
-}
-.category-tab:active { transform: scale(0.97); }
-
-.product-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 10px;
 }
 
 .product-card {
@@ -1011,10 +964,6 @@ h2::before { content: '$ '; color: var(--accent); font-weight: 700; }
 }
 .toast::before { content: '> '; color: #fff; }
 
-@media (max-width: 380px) {
-  .product-grid { grid-template-columns: repeat(auto-fill, minmax(135px, 1fr)); }
-}
-
 /* En pantallas muy angostas, la barra buscar+escanear+vaciar+actualizar
    no entra en una sola fila: el buscador pasa a ocupar toda la fila y
    los 3 botones quedan debajo, repartidos en partes iguales. Así nunca
@@ -1037,7 +986,6 @@ h2::before { content: '$ '; color: var(--accent); font-weight: 700; }
   .scan-cta-icon { width: 40px; height: 40px; }
   .scan-cta-icon svg { width: 20px; height: 20px; }
   .scan-cta-text strong { font-size: 14.5px; }
-  .catalog-hero { padding: 24px 16px; }
 }
 
 </style>
@@ -1089,7 +1037,13 @@ h2::before { content: '$ '; color: var(--accent); font-weight: 700; }
   </button>
 
   <div class="catalog-toolbar">
-    <input id="searchInput" type="search" placeholder="Buscar servicio…" autocomplete="off" enterkeyhint="search">
+    <input id="searchInput" type="search" inputmode="numeric" placeholder="Código de barras…" autocomplete="off" enterkeyhint="search">
+    <button id="searchCodeBtn" class="icon-btn search-btn" aria-label="Buscar por código" title="Buscar por código">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="7"/>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+    </button>
     <button id="clearCartQuickBtn" class="icon-btn" disabled aria-label="Vaciar todo el pedido" title="Vaciar todo el pedido">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M3 6h18"/>
@@ -1104,19 +1058,12 @@ h2::before { content: '$ '; color: var(--accent); font-weight: 700; }
       <span id="refreshBtnContent">↻ actualizar</span>
     </button>
   </div>
+  <p class="search-hint">Escribe o escanea el código de barras del producto y presiona buscar.</p>
   <p class="refresh-hint">⚠️ Antes de realizar tu pedido, no olvides actualizar</p>
   <p id="catalogMeta" class="catalog-meta"></p>
-  <div id="categoryTabs" class="category-tabs" hidden></div>
 
-  <div id="catalogHero" class="catalog-hero">
-    <span class="catalog-hero-icon" aria-hidden="true">🔎</span>
-    <p class="catalog-hero-title">Busca un servicio o elegí una categoría</p>
-    <p class="catalog-hero-sub">Para que esta pantalla cargue rápido en el celular, el catálogo completo no se muestra de una.</p>
-    <button id="showCatalogBtn" class="show-catalog-btn" type="button">Ver catálogo completo</button>
-  </div>
-
-  <div id="productGrid" class="product-grid" hidden></div>
-  <p id="emptyMsg" class="empty-msg" hidden>No hay servicios que coincidan con tu búsqueda.</p>
+  <div id="codeResult" class="code-result" hidden></div>
+  <p id="codeNotFound" class="empty-msg" hidden></p>
 </main>
 
 <div id="scannerModal" class="scanner-modal" hidden>
@@ -2958,18 +2905,17 @@ function crearImgLocal(codigo, alt) {
 // distintos el QR ya no puede codificar los datos. Dejamos margen de sobra.
 const MAX_ITEMS_QR = 15;
 
-let productos = [];        // catálogo actual en memoria
-let categorias = [];        // categorías (Menu) actuales en memoria
-let categoriaActiva = 'todos'; // Men_Id seleccionado, o 'todos'
+let productos = [];        // catálogo completo, cargado y cacheado en localStorage
+                            // para que la búsqueda por código funcione también sin conexión
+let categorias = [];        // categorías (Menu), se guardan en cache aunque ya no se listan en pantalla
 let cart = {};              // { Pro_Id: cantidad }
 
-// Controla si la grilla de productos se muestra en la pantalla principal.
-// Por diseño arranca en false: la pantalla principal NO precarga ni
-// expone todo el catálogo de una — solo aparece cuando el usuario busca
-// algo, toca una categoría, o pide explícitamente "ver catálogo completo".
-// Esto mantiene la pantalla principal liviana y enfocada en escanear,
-// que es la forma más rápida de armar un pedido en el celular.
-let mostrarCatalogo = false;
+// Producto actualmente mostrado en la pantalla principal tras buscar un
+// código de barras (Pro_Id), o null si no hay ningún resultado activo.
+// El catálogo NUNCA se lista completo en pantalla: solo se muestra el
+// producto puntual que coincide con el código buscado (a mano o con el
+// lector), y desde ahí se decide si se añade o no.
+let resultadoActual = null;
 let ultimoTicket = null;    // último pedido generado (para reimprimir si hace falta)
 
 /* ---------------- Utilidades ---------------- */
@@ -3036,8 +2982,7 @@ async function cargarCatalogo() {
         productos = parsed.productos || [];
         categorias = parsed.categorias || [];
         renderCatalogMeta(parsed.actualizado, true);
-        renderCategoryTabs();
-        renderProductGrid();
+        renderCodeResult();
       } catch (e) { /* cache corrupto, se ignora */ }
     }
 
@@ -3064,8 +3009,7 @@ async function cargarCatalogo() {
           actualizado: data.actualizado || new Date().toISOString()
         }));
         renderCatalogMeta(data.actualizado, false);
-        renderCategoryTabs();
-        renderProductGrid();
+        renderCodeResult();
         setStatus('online');
       }
     } catch (err) {
@@ -3091,118 +3035,102 @@ function renderCatalogMeta(actualizadoISO, esCache) {
   el.textContent = (esCache ? 'Catálogo guardado · ' : 'Catálogo actualizado · ') + fecha;
 }
 
-/* ---------------- Renderizado de catálogo ---------------- */
+/* ---------------- Búsqueda por código de barras ---------------- */
 
-function renderCategoryTabs() {
-  const wrap = document.getElementById('categoryTabs');
+// Busca en el catálogo (ya cargado/cacheado localmente, funciona sin
+// conexión) el producto cuyo Pro_CodigoBarra coincida EXACTO con el
+// código escrito a mano en la pantalla principal. A propósito no filtra
+// por texto ni arma ningún listado: si lo encuentra, muestra solamente
+// ESE producto puntual con la opción de añadirlo; si no, avisa que no
+// se encontró. El catálogo completo nunca se expone como lista aquí.
+function buscarPorCodigo() {
+  const codigo = document.getElementById('searchInput').value.trim();
+  const notFound = document.getElementById('codeNotFound');
 
-  // Si no hay categorías (o solo hay productos sin categoría asignada),
-  // no mostramos la barra de pestañas para no ensuciar la pantalla.
-  if (!categorias.length) {
-    wrap.hidden = true;
-    wrap.innerHTML = '';
+  if (!codigo) {
+    resultadoActual = null;
+    notFound.hidden = true;
+    renderCodeResult();
     return;
   }
 
-  // Si la categoría que estaba activa ya no existe en el catálogo nuevo,
-  // volvemos a "todos" para no dejar la grilla vacía sin explicación.
-  if (categoriaActiva !== 'todos' && !categorias.some((c) => c.Men_Id === categoriaActiva)) {
-    categoriaActiva = 'todos';
+  const p = productos.find((x) => String(x.Pro_CodigoBarra || '').trim() === codigo);
+
+  if (!p) {
+    resultadoActual = null;
+    renderCodeResult();
+    notFound.textContent = `No se encontró ningún servicio con el código "${codigo}".`;
+    notFound.hidden = false;
+    return;
   }
 
-  wrap.hidden = false;
-  wrap.innerHTML = '';
-
-  const makeTab = (id, label) => {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'category-tab' + (categoriaActiva === id ? ' active' : '');
-    btn.textContent = label;
-    btn.addEventListener('click', () => {
-      categoriaActiva = id;
-      mostrarCatalogo = true; // tocar una categoría es una decisión explícita de explorar
-      renderCategoryTabs();
-      renderProductGrid();
-    });
-    return btn;
-  };
-
-  wrap.appendChild(makeTab('todos', 'Todos'));
-  categorias.forEach((c) => {
-    wrap.appendChild(makeTab(c.Men_Id, c.Men_Descripcion || 'Sin nombre'));
-  });
+  notFound.hidden = true;
+  resultadoActual = p.Pro_Id;
+  renderCodeResult();
 }
 
-function renderProductGrid() {
-  const grid = document.getElementById('productGrid');
-  const hero = document.getElementById('catalogHero');
-  const query = document.getElementById('searchInput').value.trim().toLowerCase();
+// Pinta (o limpia) la tarjeta del único producto encontrado. Se vuelve a
+// llamar cada vez que cambia el carrito, para que sus controles de
+// cantidad reflejen siempre el estado actual.
+function renderCodeResult() {
+  const holder = document.getElementById('codeResult');
 
-  // La grilla solo se arma y se muestra si el usuario buscó algo o pidió
-  // explícitamente ver el catálogo (categoría o botón "ver todo"). Si no,
-  // dejamos la pantalla principal limpia con el estado "hero".
-  const debeMostrarGrilla = query.length > 0 || mostrarCatalogo;
-
-  if (!debeMostrarGrilla) {
-    grid.hidden = true;
-    grid.innerHTML = '';
-    document.getElementById('emptyMsg').hidden = true;
-    if (hero) hero.hidden = false;
+  if (!resultadoActual) {
+    holder.hidden = true;
+    holder.innerHTML = '';
     return;
   }
-  if (hero) hero.hidden = true;
-  grid.hidden = false;
 
-  const filtrados = productos.filter((p) => {
-    const coincideTexto = (p.Pro_Descripcion || '').toLowerCase().includes(query);
-    const coincideCategoria = categoriaActiva === 'todos' || p.Pro_MenuId === categoriaActiva;
-    return coincideTexto && coincideCategoria;
-  });
+  const p = productos.find((x) => x.Pro_Id === resultadoActual);
+  if (!p) {
+    // El producto ya no existe en el catálogo actual (p. ej. tras un refresh)
+    resultadoActual = null;
+    holder.hidden = true;
+    holder.innerHTML = '';
+    return;
+  }
 
-  document.getElementById('emptyMsg').hidden = filtrados.length !== 0;
-  grid.innerHTML = '';
+  holder.hidden = false;
+  const qty = cart[p.Pro_Id] || 0;
+  const card = document.createElement('article');
+  card.className = 'product-card' + (qty > 0 ? ' in-cart' : '');
 
-  filtrados.forEach((p) => {
-    const card = document.createElement('article');
-    const qty = cart[p.Pro_Id] || 0;
-    card.className = 'product-card' + (qty > 0 ? ' in-cart' : '');
+  card.innerHTML = `
+    ${qty > 0 ? `<button class="card-clear-btn" data-act="clear" aria-label="Quitar del pedido">×</button>` : ''}
+    <div class="thumb"><span class="thumb-placeholder">🍽️</span></div>
+    <div class="desc">${escapeHtml(p.Pro_Descripcion)}</div>
+    <div class="price">${money(p.Pro_Precio)}</div>
+    ${qty > 0 ? `
+      <div class="card-qty-control">
+        <button class="card-qty-btn" data-act="dec" aria-label="Quitar uno">−</button>
+        <span class="card-qty-value">${qty}</span>
+        <button class="card-qty-btn" data-act="inc" aria-label="Añadir uno">+</button>
+      </div>
+    ` : `
+      <button class="add-btn" data-act="add">+ añadir al pedido</button>
+    `}
+  `;
 
-    card.innerHTML = `
-      ${qty > 0 ? `<button class="card-clear-btn" data-act="clear" aria-label="Quitar del pedido">×</button>` : ''}
-      <div class="thumb"><span class="thumb-placeholder">🍽️</span></div>
-      <div class="desc">${escapeHtml(p.Pro_Descripcion)}</div>
-      <div class="price">${money(p.Pro_Precio)}</div>
-      ${qty > 0 ? `
-        <div class="card-qty-control">
-          <button class="card-qty-btn" data-act="dec" aria-label="Quitar uno">−</button>
-          <span class="card-qty-value">${qty}</span>
-          <button class="card-qty-btn" data-act="inc" aria-label="Añadir uno">+</button>
-        </div>
-      ` : `
-        <button class="add-btn" data-act="add">+ añadir</button>
-      `}
-    `;
+  if (qty > 0) {
+    card.querySelector('[data-act="dec"]').addEventListener('click', () => changeQty(p.Pro_Id, -1));
+    card.querySelector('[data-act="inc"]').addEventListener('click', () => changeQty(p.Pro_Id, 1));
+    card.querySelector('[data-act="clear"]').addEventListener('click', () => removeFromCart(p.Pro_Id));
+  } else {
+    card.querySelector('[data-act="add"]').addEventListener('click', () => addToCart(p.Pro_Id));
+  }
 
-    if (qty > 0) {
-      card.querySelector('[data-act="dec"]').addEventListener('click', () => changeQty(p.Pro_Id, -1));
-      card.querySelector('[data-act="inc"]').addEventListener('click', () => changeQty(p.Pro_Id, 1));
-      card.querySelector('[data-act="clear"]').addEventListener('click', () => removeFromCart(p.Pro_Id));
-    } else {
-      card.querySelector('[data-act="add"]').addEventListener('click', () => addToCart(p.Pro_Id));
-    }
+  holder.innerHTML = '';
+  holder.appendChild(card);
 
-    grid.appendChild(card);
-
-    // Imagen local: si el producto tiene Pro_Codigo, se arma el <img>
-    // apuntando a "IMGs/<codigo>.<extension>", que carga instantaneo
-    // porque el archivo esta al lado del HTML (no hay red de por medio).
-    const codigo = p.Pro_Codigo && String(p.Pro_Codigo).trim();
-    if (codigo) {
-      const thumb = card.querySelector('.thumb');
-      thumb.innerHTML = '';
-      thumb.appendChild(crearImgLocal(codigo, p.Pro_Descripcion));
-    }
-  });
+  // Imagen local: si el producto tiene Pro_Codigo, se arma el <img>
+  // apuntando a "IMGs/<codigo>.<extension>", que carga instantaneo
+  // porque el archivo esta al lado del HTML (no hay red de por medio).
+  const codigo = p.Pro_Codigo && String(p.Pro_Codigo).trim();
+  if (codigo) {
+    const thumb = card.querySelector('.thumb');
+    thumb.innerHTML = '';
+    thumb.appendChild(crearImgLocal(codigo, p.Pro_Descripcion));
+  }
 }
 
 function escapeHtml(str) {
@@ -3543,7 +3471,7 @@ async function cerrarScanner() {
 function addToCart(id, opts) {
   cart[id] = (cart[id] || 0) + 1;
   persistCart();
-  renderProductGrid();
+  renderCodeResult();
   renderCartCount();
   if (!opts || opts.toast !== false) showToast('Añadido al pedido');
 }
@@ -3553,7 +3481,7 @@ function changeQty(id, delta) {
   if (cart[id] <= 0) delete cart[id];
   persistCart();
   renderCart();
-  renderProductGrid();
+  renderCodeResult();
   renderCartCount();
 }
 
@@ -3561,7 +3489,7 @@ function removeFromCart(id, opts) {
   delete cart[id];
   persistCart();
   renderCart();
-  renderProductGrid();
+  renderCodeResult();
   renderCartCount();
   if (!opts || opts.toast !== false) showToast('Quitado del pedido');
 }
@@ -3570,7 +3498,7 @@ function vaciarCarrito() {
   cart = {};
   persistCart();
   renderCart();
-  renderProductGrid();
+  renderCodeResult();
   renderCartCount();
   showToast('Pedido vaciado');
 }
@@ -4073,14 +4001,13 @@ async function guardarPedido() {
 function resetToCatalog() {
   document.getElementById('checkoutForm').reset();
   // Cada pedido nuevo empieza con la pantalla principal limpia otra vez:
-  // sin búsqueda pendiente, sin catálogo desplegado, categoría en "todos".
+  // sin código buscado ni resultado pendiente en pantalla.
   document.getElementById('searchInput').value = '';
-  mostrarCatalogo = false;
-  categoriaActiva = 'todos';
+  resultadoActual = null;
+  document.getElementById('codeNotFound').hidden = true;
   renderCheckoutSummary();
   renderCart();
-  renderCategoryTabs();
-  renderProductGrid();
+  renderCodeResult();
   showView('catalogView');
 }
 
@@ -4104,7 +4031,7 @@ function volverAEditarPedido() {
 
   ultimoTicket = null;
   renderCart();
-  renderProductGrid();
+  renderCodeResult();
   showView('cartView');
   showToast('Pedido restaurado, sigue añadiendo');
 }
@@ -4123,14 +4050,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
   cargarCatalogo();
 
-  document.getElementById('searchInput').addEventListener('input', renderProductGrid);
+  // El campo de la pantalla principal busca por código exacto, no por
+  // texto: mientras se edita solo se limpia el resultado anterior (para
+  // no dejar en pantalla un producto que ya no corresponde al código que
+  // se está escribiendo). La búsqueda se dispara recién con Enter, con el
+  // botón de lupa, o al usar la "x" nativa de borrar / tecla "buscar" del
+  // teclado del celular (evento "search").
+  document.getElementById('searchInput').addEventListener('input', () => {
+    resultadoActual = null;
+    document.getElementById('codeNotFound').hidden = true;
+    renderCodeResult();
+  });
+  document.getElementById('searchInput').addEventListener('keydown', (ev) => {
+    if (ev.key === 'Enter') { ev.preventDefault(); buscarPorCodigo(); }
+  });
+  document.getElementById('searchInput').addEventListener('search', buscarPorCodigo);
+  document.getElementById('searchCodeBtn').addEventListener('click', buscarPorCodigo);
+
   document.getElementById('refreshBtn').addEventListener('click', () => {
     setStatus('checking');
     cargarCatalogo();
-  });
-  document.getElementById('showCatalogBtn').addEventListener('click', () => {
-    mostrarCatalogo = true;
-    renderProductGrid();
   });
 
   document.getElementById('cartBtn').addEventListener('click', () => {
