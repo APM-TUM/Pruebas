@@ -657,6 +657,71 @@
     width:56px; height:56px; border-radius:18px; flex-shrink:0;
   }
   .share-icon-btn svg{ width:22px; height:22px; }
+
+  /* ---------- CHECKOUT (datos del cliente) ---------- */
+  .checkout-body{
+    flex:1; min-height:0; overflow-y:auto;
+    padding: 6px 20px 20px;
+    display:flex; flex-direction:column; gap:16px;
+  }
+  .checkout-hint{
+    margin:2px 0 0;
+    font-size:13px; line-height:1.5;
+    color: var(--text-muted);
+  }
+  .form-field{
+    display:flex; flex-direction:column; gap:8px;
+  }
+  .form-field label{
+    font-size:13px; color: var(--text-muted);
+  }
+  .form-field label .opt{ opacity:.7; font-size:11.5px; }
+  .form-field input{
+    height:52px;
+    background: var(--surface);
+    border: 1.5px solid var(--line);
+    border-radius: 16px;
+    padding: 0 16px;
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size:15px;
+    outline:none;
+    transition: border-color .15s ease;
+  }
+  .form-field input::placeholder{ color: var(--text-muted); }
+  .form-field input:focus{ border-color: var(--amber); }
+  .checkout-summary-row{
+    display:flex; align-items:center; justify-content:space-between;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 14px 16px;
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    color: var(--text-muted);
+    margin-top:4px;
+  }
+  .checkout-summary-row strong{
+    font-family: var(--font-display); font-weight:700; font-size:16px;
+    color: var(--amber);
+  }
+
+  /* ---------- Datos del cliente dentro del ticket ---------- */
+  .ticket-cliente-box{
+    width:100%;
+    display:flex; flex-direction:column; gap:6px;
+    background: var(--bg-soft);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 12px 14px;
+    margin: 4px 0 14px;
+  }
+  .ticket-cliente-box .tc-row{
+    display:flex; align-items:center; justify-content:space-between;
+    font-size:13px;
+  }
+  .ticket-cliente-box .tc-row span:first-child{ color: var(--text-muted); }
+  .ticket-cliente-box .tc-row span:last-child{ font-weight:600; text-align:right; margin-left:12px; }
   .qr-secondary-row{
     display:flex; gap:10px;
   }
@@ -822,6 +887,56 @@
     </div>
   </div>
 
+  <!-- ================= DATOS DEL CLIENTE (antes de generar el QR) ================= -->
+  <div id="checkoutScreen" class="screen qr-screen hidden">
+    <div class="topbar">
+      <button id="checkoutBackBtn" class="icon-nav-btn" aria-label="Volver al carrito">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      </button>
+      <div class="brand"><span class="brand-dot"></span>Datos del cliente</div>
+      <button id="checkoutCartBtn" class="icon-nav-btn" aria-label="Ver mi carrito">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="9" cy="21" r="1.4" fill="var(--text)" stroke="none"/>
+          <circle cx="18" cy="21" r="1.4" fill="var(--text)" stroke="none"/>
+          <path d="M2.5 3h2.4l2.1 11.4a2 2 0 0 0 2 1.6h8.3a2 2 0 0 0 2-1.6L21 7H6"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="checkout-body">
+      <p class="checkout-hint">Estos datos son opcionales, pero quedarán guardados dentro del código QR junto a tus productos.</p>
+
+      <div class="form-field">
+        <label>Nombre <span class="opt">(opcional)</span></label>
+        <input id="clienteInput" type="text" placeholder="Ej. Juan Pérez" autocomplete="off">
+      </div>
+      <div class="form-field">
+        <label>Celular <span class="opt">(opcional)</span></label>
+        <input id="celularInput" type="tel" inputmode="numeric" placeholder="Ej. 70012345" autocomplete="off">
+      </div>
+      <div class="form-field">
+        <label>NIT / CI <span class="opt">(opcional)</span></label>
+        <input id="nitInput" type="text" inputmode="numeric" placeholder="Ej. 1234567019" autocomplete="off">
+      </div>
+
+      <div class="checkout-summary-row">
+        <span>Artículos en tu compra</span>
+        <strong id="checkoutTotal">0</strong>
+      </div>
+    </div>
+
+    <div class="qr-actions">
+      <button id="checkoutSubmitBtn" class="primary-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+          <rect x="3" y="14" width="7" height="7" rx="1"/>
+          <path d="M14 14h3v3h-3zM20 14v3M14 20h3M20 20v.01"/>
+        </svg>
+        Generar código QR
+      </button>
+    </div>
+  </div>
+
   <!-- ================= QR SCREEN ================= -->
   <div id="qrScreen" class="screen qr-screen hidden">
     <div class="topbar">
@@ -842,6 +957,12 @@
       <div class="ticket-card">
         <div class="t-brand"><span class="brand-dot"></span>CreadorQR</div>
         <div id="qrFecha" class="t-sub"></div>
+
+        <div id="qrClienteBox" class="ticket-cliente-box hidden">
+          <div class="tc-row"><span>Cliente</span><span id="qrClienteNombre"></span></div>
+          <div id="qrClienteCelularRow" class="tc-row hidden"><span>Celular</span><span id="qrClienteCelular"></span></div>
+          <div id="qrClienteNitRow" class="tc-row hidden"><span>NIT/CI</span><span id="qrClienteNit"></span></div>
+        </div>
 
         <div id="qrItems" class="ticket-items"></div>
 
@@ -2578,6 +2699,22 @@ var qrcode = function() {
   var editQrBtn = document.getElementById('editQrBtn');
   var newQrBtn = document.getElementById('newQrBtn');
 
+  var qrClienteBox = document.getElementById('qrClienteBox');
+  var qrClienteNombre = document.getElementById('qrClienteNombre');
+  var qrClienteCelularRow = document.getElementById('qrClienteCelularRow');
+  var qrClienteCelular = document.getElementById('qrClienteCelular');
+  var qrClienteNitRow = document.getElementById('qrClienteNitRow');
+  var qrClienteNit = document.getElementById('qrClienteNit');
+
+  var checkoutScreen = document.getElementById('checkoutScreen');
+  var checkoutBackBtn = document.getElementById('checkoutBackBtn');
+  var checkoutCartBtn = document.getElementById('checkoutCartBtn');
+  var checkoutSubmitBtn = document.getElementById('checkoutSubmitBtn');
+  var checkoutTotalEl = document.getElementById('checkoutTotal');
+  var clienteInput = document.getElementById('clienteInput');
+  var celularInput = document.getElementById('celularInput');
+  var nitInput = document.getElementById('nitInput');
+
   var ultimaCompra = null; // último payload generado, para poder editar/guardar
 
   var catalogStatus = document.getElementById('catalogStatus');
@@ -3035,11 +3172,18 @@ var qrcode = function() {
     if (cart.length === 0) return;
 
     var ahora = new Date();
+    var cliente = clienteInput.value.trim();
+    var celular = celularInput.value.trim();
+    var nit = nitInput.value.trim();
+
     var payload = {
       tipo: 'MI_COMPRA',
       version: 1,
       id: randomId(),
       generado: ahora.toISOString(),
+      cliente: cliente,
+      celular: celular,
+      nit: nit,
       items: cart.map(function(it){
         return { code: it.code, name: it.name };
       }),
@@ -3049,11 +3193,32 @@ var qrcode = function() {
 
     renderTicket(payload, ahora);
     closeSheet();
+    checkoutScreen.classList.remove('active');
+    setTimeout(function(){ checkoutScreen.classList.add('hidden'); }, 200);
     goToQrScreen();
   }
 
   function renderTicket(payload, ahora){
     qrFecha.textContent = fechaLegible(ahora || new Date(payload.generado));
+
+    if (payload.cliente){
+      qrClienteBox.classList.remove('hidden');
+      qrClienteNombre.textContent = payload.cliente;
+      if (payload.celular){
+        qrClienteCelularRow.classList.remove('hidden');
+        qrClienteCelular.textContent = payload.celular;
+      } else {
+        qrClienteCelularRow.classList.add('hidden');
+      }
+      if (payload.nit){
+        qrClienteNitRow.classList.remove('hidden');
+        qrClienteNit.textContent = payload.nit;
+      } else {
+        qrClienteNitRow.classList.add('hidden');
+      }
+    } else {
+      qrClienteBox.classList.add('hidden');
+    }
 
     qrItemsEl.innerHTML = '';
     payload.items.forEach(function(it){
@@ -3092,7 +3257,38 @@ var qrcode = function() {
     }, 200);
   }
 
-  genQrBtn.addEventListener('click', generarQR);
+  // ---------- Datos del cliente (paso previo a generar el QR) ----------
+  function goToCheckoutScreen(){
+    closeSheet();
+    checkoutTotalEl.textContent = String(totalQty());
+    scanner.classList.add('hidden');
+    checkoutScreen.classList.remove('hidden');
+    requestAnimationFrame(function(){ checkoutScreen.classList.add('active'); });
+  }
+
+  function volverDeCheckout(){
+    checkoutScreen.classList.remove('active');
+    setTimeout(function(){
+      checkoutScreen.classList.add('hidden');
+      scanner.classList.remove('hidden');
+    }, 200);
+  }
+
+  genQrBtn.addEventListener('click', function(){
+    if (cart.length === 0) return;
+    goToCheckoutScreen();
+  });
+
+  checkoutBackBtn.addEventListener('click', function(){
+    volverDeCheckout();
+    setTimeout(function(){ renderCart(); openSheet(); }, 210);
+  });
+  checkoutCartBtn.addEventListener('click', function(){
+    renderCart();
+    openSheet();
+  });
+  checkoutSubmitBtn.addEventListener('click', generarQR);
+
   qrBackBtn.addEventListener('click', volverAEscanear);
 
   // Acceso rápido al carrito desde la pantalla del QR, para agregar
@@ -3106,11 +3302,14 @@ var qrcode = function() {
     setTimeout(function(){ renderCart(); openSheet(); }, 210);
   });
 
-  // Empezar una compra nueva: vacía el carrito y vuelve al escáner.
+  // Empezar una compra nueva: vacía el carrito, los datos del cliente y vuelve al escáner.
   newQrBtn.addEventListener('click', function(){
     cart = [];
     renderCart();
     ultimaCompra = null;
+    clienteInput.value = '';
+    celularInput.value = '';
+    nitInput.value = '';
     volverAEscanear();
   });
 
@@ -3165,6 +3364,32 @@ var qrcode = function() {
         ctx.fillStyle = colMute;
         ctx.fillText(fechaLegible(new Date(payload.generado)), width / 2, y + 8);
         y += 26;
+
+        if (payload.cliente){
+          ctx.strokeStyle = colLine;
+          ctx.beginPath(); ctx.moveTo(padding, y); ctx.lineTo(width - padding, y); ctx.stroke();
+          y += 16;
+
+          ctx.textAlign = 'left';
+          ctx.font = '600 12.5px sans-serif';
+          ctx.fillStyle = colInk;
+          ctx.fillText('Cliente: ' + payload.cliente, padding, y + 8);
+          y += 18;
+          if (payload.celular){
+            ctx.font = '12px sans-serif';
+            ctx.fillStyle = colMute;
+            ctx.fillText('Celular: ' + payload.celular, padding, y + 6);
+            y += 16;
+          }
+          if (payload.nit){
+            ctx.font = '12px sans-serif';
+            ctx.fillStyle = colMute;
+            ctx.fillText('NIT/CI: ' + payload.nit, padding, y + 6);
+            y += 16;
+          }
+          ctx.textAlign = 'center';
+          y += 6;
+        }
 
         ctx.strokeStyle = colLine;
         ctx.beginPath(); ctx.moveTo(padding, y); ctx.lineTo(width - padding, y); ctx.stroke();
