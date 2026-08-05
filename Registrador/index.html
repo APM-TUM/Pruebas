@@ -309,6 +309,13 @@ h2 { font-family: var(--display); font-size: 19px; font-weight: 700; margin: 6px
 #modalVideo { width: 100%; height: 100%; object-fit: cover; }
 .modal-camera-frame .reticle-corner { width: 20px; height: 20px; }
 .modal-camera-hint { font-size: 12px; color: var(--text-mute); text-align: center; margin: 0; }
+.modal-scan-success {
+  position: absolute; inset: 0; background: rgba(27,138,90,0.92);
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity 0.12s ease;
+}
+.modal-scan-success.show { opacity: 1; }
+.modal-scan-success svg { width: 44px; height: 44px; color: #fff; }
 .modal-scan-error {
   font-size: 12.5px; color: #9a4a12; background: #fdeee0; border: 1px solid #f2c99a;
   border-radius: var(--radius); padding: 8px 12px; margin: 0 18px 10px; text-align: center; line-height: 1.5; flex-shrink: 0;
@@ -492,6 +499,9 @@ h2 { font-family: var(--display); font-size: 19px; font-weight: 700; margin: 6px
           <span class="reticle-corner tr"></span>
           <span class="reticle-corner bl"></span>
           <span class="reticle-corner br"></span>
+        </div>
+        <div id="modalScanSuccess" class="modal-scan-success">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </div>
       </div>
       <p class="modal-camera-hint">Apunta al código de barras del producto.</p>
@@ -1060,6 +1070,7 @@ function stopModalScan() {
     modalScanControls = null;
   }
   document.getElementById('modalCameraPane').hidden = true;
+  document.getElementById('modalScanSuccess').classList.remove('show');
   setModalScanBtnState(false);
 }
 
@@ -1078,10 +1089,18 @@ function handleBarcodeResult(codigo) {
   if (prod) {
     document.getElementById('modalScanError').hidden = true;
     agregarProductoAlPedido(prod);
+    flashModalScanSuccess();
     if (navigator.vibrate) navigator.vibrate(70);
   } else {
     showModalScanError(`Código "${texto}" no coincide con ningún producto del catálogo.`);
   }
+}
+
+function flashModalScanSuccess() {
+  const el = document.getElementById('modalScanSuccess');
+  el.classList.add('show');
+  clearTimeout(flashModalScanSuccess._t);
+  flashModalScanSuccess._t = setTimeout(() => el.classList.remove('show'), 600);
 }
 
 function showModalScanError(msg) {
