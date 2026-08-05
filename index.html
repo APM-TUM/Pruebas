@@ -394,12 +394,73 @@ h2::before { content: '$ '; color: var(--accent); font-weight: 700; }
 
 /* ---------- Escáner de código de barras ---------- */
 
-.scan-btn:not(:disabled) {
-  color: var(--accent);
-  border-color: rgba(30,58,95,0.3);
+/* Botón principal de la pantalla de inicio: es la acción más usada
+   (escanear), así que va primero, grande y con buen espacio para el
+   dedo pulgar en celular — mucho más fácil de acertar que un ícono
+   chico en una fila apretada de botones. */
+.scan-cta-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: linear-gradient(135deg, var(--accent-bright) 0%, var(--accent) 100%);
+  border: none;
+  border-radius: var(--radius);
+  color: #fff;
+  padding: 16px 18px;
+  box-shadow: var(--shadow-primary);
+  transition: box-shadow 0.2s ease, transform 0.15s ease;
+  margin-bottom: 12px;
+  text-align: left;
 }
-.scan-btn:not(:disabled):hover { background-color: var(--accent-soft); border-color: var(--accent); }
-.scan-btn:not(:disabled):active { transform: scale(0.94); }
+.scan-cta-btn:hover { box-shadow: var(--shadow-primary-hover); }
+.scan-cta-btn:active { transform: scale(0.98); box-shadow: var(--shadow-primary); }
+.scan-cta-icon {
+  flex-shrink: 0;
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.16);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.scan-cta-icon svg { width: 24px; height: 24px; }
+.scan-cta-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.scan-cta-text strong { font-size: 15.5px; font-weight: 700; }
+.scan-cta-text small { font-size: 12px; color: rgba(255,255,255,0.78); }
+
+/* Estado inicial de la pantalla principal: reemplaza a la grilla de
+   productos hasta que el usuario busque, elija una categoría, o pida
+   ver todo el catálogo explícitamente. Mantiene la pantalla liviana y
+   evita el scroll largo típico de listas de catálogo en el celular. */
+.catalog-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 6px;
+  background: var(--card);
+  border: 1px dashed var(--line);
+  border-radius: var(--radius);
+  padding: 30px 20px;
+  margin-top: 6px;
+}
+.catalog-hero-icon { font-size: 26px; opacity: 0.6; }
+.catalog-hero-title { font-size: 14.5px; font-weight: 700; color: var(--text); margin: 4px 0 0; }
+.catalog-hero-sub { font-size: 12.5px; color: var(--text-mute); max-width: 320px; line-height: 1.45; margin: 0; }
+.show-catalog-btn {
+  margin-top: 10px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--accent);
+  font-family: var(--mono);
+  font-weight: 600;
+  font-size: 12.5px;
+  padding: 9px 16px;
+  border-radius: 999px;
+}
+.show-catalog-btn:active { transform: scale(0.96); }
 
 .scanner-modal {
   position: fixed;
@@ -972,6 +1033,11 @@ h2::before { content: '$ '; color: var(--accent); font-weight: 700; }
     width: auto;
     min-width: 0;
   }
+  .scan-cta-btn { padding: 14px 14px; gap: 12px; }
+  .scan-cta-icon { width: 40px; height: 40px; }
+  .scan-cta-icon svg { width: 20px; height: 20px; }
+  .scan-cta-text strong { font-size: 14.5px; }
+  .catalog-hero { padding: 24px 16px; }
 }
 
 </style>
@@ -1001,9 +1067,9 @@ h2::before { content: '$ '; color: var(--accent); font-weight: 700; }
 </header>
 
 <main id="catalogView" class="view">
-  <div class="catalog-toolbar">
-    <input id="searchInput" type="search" placeholder="Buscar servicio…" autocomplete="off">
-    <button id="scanBtn" class="icon-btn scan-btn" aria-label="Escanear código de barras" title="Escanear código de barras">
+
+  <button id="scanBtn" class="scan-cta-btn" aria-label="Escanear código de barras">
+    <span class="scan-cta-icon">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M3 7V5a2 2 0 0 1 2-2h2"/>
         <path d="M17 3h2a2 2 0 0 1 2 2v2"/>
@@ -1015,7 +1081,15 @@ h2::before { content: '$ '; color: var(--accent); font-weight: 700; }
         <line x1="16" y1="8" x2="16" y2="16"/>
         <line x1="19" y1="8" x2="19" y2="16"/>
       </svg>
-    </button>
+    </span>
+    <span class="scan-cta-text">
+      <strong>Escanear código de barras</strong>
+      <small>La forma más rápida de añadir un producto</small>
+    </span>
+  </button>
+
+  <div class="catalog-toolbar">
+    <input id="searchInput" type="search" placeholder="Buscar servicio…" autocomplete="off" enterkeyhint="search">
     <button id="clearCartQuickBtn" class="icon-btn" disabled aria-label="Vaciar todo el pedido" title="Vaciar todo el pedido">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M3 6h18"/>
@@ -1033,7 +1107,15 @@ h2::before { content: '$ '; color: var(--accent); font-weight: 700; }
   <p class="refresh-hint">⚠️ Antes de realizar tu pedido, no olvides actualizar</p>
   <p id="catalogMeta" class="catalog-meta"></p>
   <div id="categoryTabs" class="category-tabs" hidden></div>
-  <div id="productGrid" class="product-grid"></div>
+
+  <div id="catalogHero" class="catalog-hero">
+    <span class="catalog-hero-icon" aria-hidden="true">🔎</span>
+    <p class="catalog-hero-title">Busca un servicio o elegí una categoría</p>
+    <p class="catalog-hero-sub">Para que esta pantalla cargue rápido en el celular, el catálogo completo no se muestra de una.</p>
+    <button id="showCatalogBtn" class="show-catalog-btn" type="button">Ver catálogo completo</button>
+  </div>
+
+  <div id="productGrid" class="product-grid" hidden></div>
   <p id="emptyMsg" class="empty-msg" hidden>No hay servicios que coincidan con tu búsqueda.</p>
 </main>
 
@@ -2880,6 +2962,14 @@ let productos = [];        // catálogo actual en memoria
 let categorias = [];        // categorías (Menu) actuales en memoria
 let categoriaActiva = 'todos'; // Men_Id seleccionado, o 'todos'
 let cart = {};              // { Pro_Id: cantidad }
+
+// Controla si la grilla de productos se muestra en la pantalla principal.
+// Por diseño arranca en false: la pantalla principal NO precarga ni
+// expone todo el catálogo de una — solo aparece cuando el usuario busca
+// algo, toca una categoría, o pide explícitamente "ver catálogo completo".
+// Esto mantiene la pantalla principal liviana y enfocada en escanear,
+// que es la forma más rápida de armar un pedido en el celular.
+let mostrarCatalogo = false;
 let ultimoTicket = null;    // último pedido generado (para reimprimir si hace falta)
 
 /* ---------------- Utilidades ---------------- */
@@ -3030,6 +3120,7 @@ function renderCategoryTabs() {
     btn.textContent = label;
     btn.addEventListener('click', () => {
       categoriaActiva = id;
+      mostrarCatalogo = true; // tocar una categoría es una decisión explícita de explorar
       renderCategoryTabs();
       renderProductGrid();
     });
@@ -3044,7 +3135,23 @@ function renderCategoryTabs() {
 
 function renderProductGrid() {
   const grid = document.getElementById('productGrid');
+  const hero = document.getElementById('catalogHero');
   const query = document.getElementById('searchInput').value.trim().toLowerCase();
+
+  // La grilla solo se arma y se muestra si el usuario buscó algo o pidió
+  // explícitamente ver el catálogo (categoría o botón "ver todo"). Si no,
+  // dejamos la pantalla principal limpia con el estado "hero".
+  const debeMostrarGrilla = query.length > 0 || mostrarCatalogo;
+
+  if (!debeMostrarGrilla) {
+    grid.hidden = true;
+    grid.innerHTML = '';
+    document.getElementById('emptyMsg').hidden = true;
+    if (hero) hero.hidden = false;
+    return;
+  }
+  if (hero) hero.hidden = true;
+  grid.hidden = false;
 
   const filtrados = productos.filter((p) => {
     const coincideTexto = (p.Pro_Descripcion || '').toLowerCase().includes(query);
@@ -3965,8 +4072,14 @@ async function guardarPedido() {
 
 function resetToCatalog() {
   document.getElementById('checkoutForm').reset();
+  // Cada pedido nuevo empieza con la pantalla principal limpia otra vez:
+  // sin búsqueda pendiente, sin catálogo desplegado, categoría en "todos".
+  document.getElementById('searchInput').value = '';
+  mostrarCatalogo = false;
+  categoriaActiva = 'todos';
   renderCheckoutSummary();
   renderCart();
+  renderCategoryTabs();
   renderProductGrid();
   showView('catalogView');
 }
@@ -4014,6 +4127,10 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('refreshBtn').addEventListener('click', () => {
     setStatus('checking');
     cargarCatalogo();
+  });
+  document.getElementById('showCatalogBtn').addEventListener('click', () => {
+    mostrarCatalogo = true;
+    renderProductGrid();
   });
 
   document.getElementById('cartBtn').addEventListener('click', () => {
