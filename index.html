@@ -302,6 +302,9 @@
   .flash-ok.fail{
     background: radial-gradient(circle, rgba(255,90,54,.38), transparent 65%);
   }
+  .flash-ok.dup{
+    background: radial-gradient(circle, rgba(255,178,56,.4), transparent 65%);
+  }
   .flash-ok.play{ animation: flashOk .55s ease-out; }
   @keyframes flashOk{ 0%{ opacity:1; } 100%{ opacity:0; } }
 
@@ -350,6 +353,9 @@
   .scan-toast.error{ border-color: var(--laser-soft); }
   .scan-toast.error .icon{ background: var(--laser); color:#2a0700; }
   .scan-toast.error .msg{ color: var(--laser); }
+  .scan-toast.dup{ border-color: rgba(255,178,56,.4); }
+  .scan-toast.dup .icon{ background: var(--amber); color:#1a1200; }
+  .scan-toast.dup .msg{ color: var(--amber); }
 
   .cam-fallback{
     position:absolute; inset:0;
@@ -471,13 +477,6 @@
     flex:1; min-width:0;
     font-family: var(--font-mono); font-size:14.5px;
     overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
-  }
-  .cart-row .qty{
-    font-family: var(--font-display); font-weight:700; font-size:13px;
-    color: var(--amber);
-    background: var(--amber-soft);
-    padding: 5px 10px; border-radius: 10px;
-    flex-shrink:0;
   }
   .cart-row .remove-btn{
     width:34px; height:34px; border-radius:10px;
@@ -608,6 +607,14 @@
     padding: 12px 20px max(18px, var(--safe-b));
     display:flex; flex-direction:column; gap:10px;
   }
+  .qr-primary-row{
+    display:flex; gap:10px;
+  }
+  .qr-primary-row .primary-btn{ flex:1; }
+  .share-icon-btn{
+    width:56px; height:56px; border-radius:18px; flex-shrink:0;
+  }
+  .share-icon-btn svg{ width:22px; height:22px; }
   .qr-secondary-row{
     display:flex; gap:10px;
   }
@@ -794,13 +801,21 @@
     </div>
 
     <div class="qr-actions">
-      <button id="saveQrBtn" class="primary-btn">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-          <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
-        </svg>
-        Guardar imagen del QR
-      </button>
+      <div class="qr-primary-row">
+        <button id="saveQrBtn" class="primary-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          Guardar imagen del QR
+        </button>
+        <button id="shareQrBtn" class="icon-nav-btn share-icon-btn" aria-label="Compartir imagen">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+            <line x1="8.6" y1="10.6" x2="15.4" y2="6.4"/><line x1="8.6" y1="13.4" x2="15.4" y2="17.6"/>
+          </svg>
+        </button>
+      </div>
       <div class="qr-secondary-row">
         <button id="editQrBtn" class="ghost-nav-btn">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
@@ -2505,6 +2520,7 @@ var qrcode = function() {
   var qrTotalEl = document.getElementById('qrTotal');
   var qrHolder = document.getElementById('qrHolder');
   var saveQrBtn = document.getElementById('saveQrBtn');
+  var shareQrBtn = document.getElementById('shareQrBtn');
   var editQrBtn = document.getElementById('editQrBtn');
   var newQrBtn = document.getElementById('newQrBtn');
 
@@ -2578,15 +2594,16 @@ var qrcode = function() {
     return null;
   }
 
-  // ---------- Alerta verde / roja + sonido + vibración ----------
-  function beep(ok){
+  // ---------- Alerta verde / ámbar / roja + sonido + vibración ----------
+  // state: true = añadido (verde) | 'dup' = ya estaba en el carrito (ámbar) | false = error (rojo)
+  function beep(state){
     try{
       if (!audioCtxScan) audioCtxScan = new (window.AudioContext || window.webkitAudioContext)();
       var ctx = audioCtxScan;
       var osc = ctx.createOscillator();
       var gain = ctx.createGain();
       osc.type = 'sine';
-      osc.frequency.value = ok ? 880 : 220;
+      osc.frequency.value = state === true ? 880 : (state === 'dup' ? 520 : 220);
       gain.gain.setValueAtTime(0.16, ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.18);
       osc.connect(gain); gain.connect(ctx.destination);
@@ -2594,20 +2611,22 @@ var qrcode = function() {
     }catch(e){ /* audio no disponible: seguimos con el flash + vibración */ }
   }
 
-  function showToast(ok, text){
-    scanToast.className = 'scan-toast show ' + (ok ? 'ok' : 'error');
+  function showToast(state, text){
+    var cls = state === true ? 'ok' : (state === 'dup' ? 'dup' : 'error');
+    var icon = state === true ? '✓' : (state === 'dup' ? '•' : '✕');
+    scanToast.className = 'scan-toast show ' + cls;
     scanToast.innerHTML =
-      '<span class="icon">' + (ok ? '✓' : '✕') + '</span>' +
+      '<span class="icon">' + icon + '</span>' +
       '<span class="msg">' + escapeHtml(text) + '</span>';
     clearTimeout(scanToastTimer);
     scanToastTimer = setTimeout(function(){ scanToast.classList.remove('show'); }, 1700);
   }
 
-  function feedback(ok, text){
-    vibrate(ok ? 35 : [40,40,40]);
-    beep(ok);
-    showToast(ok, text);
-    if (!cameraPanel.classList.contains('hidden')) playFlash(ok);
+  function feedback(state, text){
+    vibrate(state === true ? 35 : (state === 'dup' ? 25 : [40,40,40]));
+    beep(state);
+    showToast(state, text);
+    if (!cameraPanel.classList.contains('hidden')) playFlash(state);
   }
 
   // ---------- Gate -> Sync -> Scanner ----------
@@ -2711,10 +2730,11 @@ var qrcode = function() {
     addToCart(code);
   }
 
-  function playFlash(ok){
-    flashOk.classList.remove('play', 'fail');
+  function playFlash(state){
+    flashOk.classList.remove('play', 'fail', 'dup');
     void flashOk.offsetWidth; // restart animation
-    if (!ok) flashOk.classList.add('fail');
+    if (state === false) flashOk.classList.add('fail');
+    else if (state === 'dup') flashOk.classList.add('dup');
     flashOk.classList.add('play');
   }
 
@@ -2737,15 +2757,22 @@ var qrcode = function() {
   }
 
   // ---------- Cart ----------
+  // Los productos son únicos (identificados por su código de barras): una
+  // vez que un producto ya está en el carrito, escanearlo de nuevo no lo
+  // duplica ni suma cantidad — solo se avisa que ya estaba agregado.
   function addToCart(code){
     var p = findProduct(code);
     if (!p){
       feedback(false, 'Código ' + code + ' no encontrado');
       return;
     }
-    var item = null;
-    for (var i=0; i<cart.length; i++){ if (cart[i].id === p.Pro_Id){ item = cart[i]; break; } }
-    if (item){ item.qty += 1; } else { cart.push({ id: p.Pro_Id, code: p.Pro_CodigoBarra, name: p.Pro_Descripcion, qty: 1 }); }
+    var yaExiste = false;
+    for (var i=0; i<cart.length; i++){ if (cart[i].id === p.Pro_Id){ yaExiste = true; break; } }
+    if (yaExiste){
+      feedback('dup', p.Pro_Descripcion + ' ya está en tu carrito');
+      return;
+    }
+    cart.push({ id: p.Pro_Id, code: p.Pro_CodigoBarra, name: p.Pro_Descripcion });
     renderCart();
     bumpBadge();
     feedback(true, p.Pro_Descripcion + ' añadido');
@@ -2764,7 +2791,7 @@ var qrcode = function() {
   }
 
   function totalQty(){
-    return cart.reduce(function(sum, it){ return sum + it.qty; }, 0);
+    return cart.length;
   }
 
   function renderCart(){
@@ -2798,7 +2825,6 @@ var qrcode = function() {
         '<div class="cart-row" data-id="' + escapeHtml(it.id) + '">' +
           '<span class="dot"></span>' +
           '<span class="code">' + escapeHtml(it.name || it.code) + '</span>' +
-          '<span class="qty">x' + it.qty + '</span>' +
           '<button class="remove-btn" aria-label="Quitar" data-remove="' + escapeHtml(it.id) + '">' +
             '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>' +
           '</button>' +
@@ -2863,7 +2889,7 @@ var qrcode = function() {
       id: randomId(),
       generado: ahora.toISOString(),
       items: cart.map(function(it){
-        return { code: it.code, name: it.name, qty: it.qty };
+        return { code: it.code, name: it.name };
       }),
       totalArticulos: totalQty()
     };
@@ -2883,7 +2909,7 @@ var qrcode = function() {
       row.className = 'ti-row';
       row.innerHTML =
         '<span class="ti-name">' + escapeHtml(it.name || it.code) + '</span>' +
-        '<span class="ti-qty">x' + it.qty + '</span>';
+        '<span class="ti-qty">✓</span>';
       qrItemsEl.appendChild(row);
     });
     qrTotalEl.textContent = String(payload.totalArticulos);
@@ -2997,7 +3023,7 @@ var qrcode = function() {
         payload.items.forEach(function(it){
           ctx.font = '600 13px sans-serif';
           ctx.fillStyle = colInk;
-          var label = (it.name || it.code) + '  x' + it.qty;
+          var label = (it.name || it.code);
           var lines = wrapText(ctx, label, availableWidth);
           lines.forEach(function(line){
             ctx.fillText(line, padding, y + 10);
@@ -3075,6 +3101,25 @@ var qrcode = function() {
 
   var SAVE_QR_LABEL = saveQrBtn.innerHTML;
 
+  function nombreArchivoQR(){
+    return 'mi-compra-' + (ultimaCompra ? ultimaCompra.id : Date.now()) + '.png';
+  }
+
+  // Descarga directa al dispositivo. Esta es la acción principal y
+  // predecible: el archivo queda en la carpeta de Descargas / Archivos
+  // del teléfono, sin depender de que el usuario elija "guardar" dentro
+  // de un panel de compartir (que a veces se cierra sin guardar nada).
+  function descargarBlob(blob, nombre){
+    var url = URL.createObjectURL(blob);
+    var link = document.createElement('a');
+    link.download = nombre;
+    link.href = url;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+  }
+
   async function guardarQR(){
     saveQrBtn.disabled = true;
     saveQrBtn.textContent = 'Generando imagen…';
@@ -3087,43 +3132,44 @@ var qrcode = function() {
       return;
     }
 
-    var nombre = 'mi-compra-' + (ultimaCompra ? ultimaCompra.id : Date.now()) + '.png';
-    var file = new File([blob], nombre, { type: 'image/png' });
-    var guardado = false;
-
-    var esMovil = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
-      (navigator.maxTouchPoints > 1 && /Mac/i.test(navigator.platform));
-
-    if (esMovil && navigator.canShare && navigator.canShare({ files: [file] })){
-      try{
-        await navigator.share({ files: [file], title: 'Mi código QR de compra' });
-        guardado = true;
-      }catch(err){
-        if (err && err.name === 'AbortError'){
-          saveQrBtn.disabled = false;
-          saveQrBtn.innerHTML = SAVE_QR_LABEL;
-          return;
-        }
-      }
-    }
-
-    if (!guardado){
-      var url = URL.createObjectURL(blob);
-      var link = document.createElement('a');
-      link.download = nombre;
-      link.href = url;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
-    }
+    descargarBlob(blob, nombreArchivoQR());
 
     saveQrBtn.disabled = false;
     saveQrBtn.innerHTML = SAVE_QR_LABEL;
-    feedback(true, 'Imagen del QR guardada');
+    feedback(true, 'Imagen guardada en tu dispositivo');
   }
 
   saveQrBtn.addEventListener('click', guardarQR);
+
+  // Compartir es una acción aparte y opcional (WhatsApp, Drive, etc.),
+  // separada de "guardar" para que nunca se confundan.
+  if (shareQrBtn){
+    if (!(navigator.share || navigator.canShare)){
+      shareQrBtn.hidden = true;
+    } else {
+      shareQrBtn.addEventListener('click', async function(){
+        shareQrBtn.disabled = true;
+        var blob = await generarTicketBlob();
+        if (!blob){
+          shareQrBtn.disabled = false;
+          feedback(false, 'No se pudo generar la imagen');
+          return;
+        }
+        var nombre = nombreArchivoQR();
+        var file = new File([blob], nombre, { type: 'image/png' });
+        try{
+          if (navigator.canShare && navigator.canShare({ files: [file] })){
+            await navigator.share({ files: [file], title: 'Mi código QR de compra' });
+          } else {
+            feedback(false, 'Tu navegador no permite compartir esta imagen');
+          }
+        }catch(err){
+          // AbortError: el usuario cerró el panel sin elegir nada; no es un error real.
+        }
+        shareQrBtn.disabled = false;
+      });
+    }
+  }
 
   // ---------- Init ----------
   cargarCatalogo();
