@@ -45,6 +45,13 @@
 
 * { box-sizing: border-box; }
 
+/* Red de seguridad: el atributo hidden debe ganarle siempre a cualquier
+   display:flex/grid declarado en una clase. Ya existen overrides puntuales
+   más abajo para varios elementos, pero esta regla evita que el mismo tipo
+   de bug aparezca en algo nuevo que se agregue más adelante. */
+[hidden] { display: none !important; }
+
+
 html, body {
   margin: 0;
   padding: 0;
@@ -3298,7 +3305,19 @@ async function abrirScanner() {
   // sin limpiar que podía producir una segunda lectura casi inmediata del
   // mismo código. Para códigos de barra de producto (no códigos vistos en
   // espejo) no lo necesitamos.
-  const config = { fps: 10, qrbox: { width: 260, height: 160 }, disableFlip: true };
+  //
+  // experimentalFeatures.useBarCodeDetectorIfSupported: cuando el celular
+  // lo soporta (Chrome/Android en su mayoría), usa el decodificador nativo
+  // del sistema operativo en vez del decodificador en JavaScript — es
+  // notablemente más rápido para reconocer el código. Donde no está
+  // disponible (iPhone/Safari, navegadores viejos), la librería cae sola
+  // al decodificador en JS de siempre, sin romper nada.
+  const config = {
+    fps: 15,
+    qrbox: { width: 260, height: 160 },
+    disableFlip: true,
+    experimentalFeatures: { useBarCodeDetectorIfSupported: true }
+  };
   const onSuccess = (decodedText) => {
     framesSinDeteccion = 0; // la cámara sigue viendo un código: no lo demos por "retirado"
 
