@@ -3294,7 +3294,7 @@ var qrcode = function() {
       item.qty = (item.qty || 1) + 1;
       renderCart();
       bumpBadge();
-      feedback('dup', p.Pro_Descripcion + ' ×' + item.qty);
+      feedback(true, p.Pro_Descripcion + ' ×' + item.qty);
       return;
     }
     cart.push({ id: p.Pro_Id, code: p.Pro_CodigoBarra, name: p.Pro_Descripcion, price: Number(p.Pro_Precio) || 0, qty: 1 });
