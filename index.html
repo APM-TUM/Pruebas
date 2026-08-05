@@ -249,38 +249,46 @@
   .bottom-actions{
     flex-shrink:0;
     display:flex;
-    gap:12px;
+    gap:14px;
     padding: 14px 20px max(14px, var(--safe-b));
   }
-  .action-btn{
-    flex:1;
-    height:60px;
-    border-radius:20px;
-    display:flex; align-items:center; justify-content:center; gap:9px;
-    background: var(--surface);
-    border:1px solid var(--line);
-    color: var(--text);
-    font-family: var(--font-display); font-weight:600; font-size:14.5px;
-    transition: transform .12s ease, background .15s ease, border-color .15s ease, color .15s ease;
+  /* Solo iconos: mismo lenguaje visual que el botón grande de la
+     pantalla de inicio (superficie elevada, esquinas suaves, icono
+     grande y centrado). El texto sigue en el DOM para lectores de
+     pantalla, pero se oculta visualmente. */
+  .sr-only{
+    position:absolute; width:1px; height:1px;
+    padding:0; margin:-1px; overflow:hidden;
+    clip: rect(0,0,0,0); white-space:nowrap; border:0;
   }
-  .action-btn:active{ transform: scale(.96); }
-  .action-btn svg{ width:22px; height:22px; flex-shrink:0; }
+  .action-btn{
+    position:relative;
+    flex:1;
+    height:76px;
+    border-radius:24px;
+    display:flex; align-items:center; justify-content:center;
+    background: linear-gradient(160deg, var(--surface-raised), var(--surface));
+    border:1px solid var(--line);
+    color: var(--text-muted);
+    box-shadow: 0 14px 34px -18px rgba(0,0,0,.75);
+    transition: transform .15s cubic-bezier(.3,1.6,.4,1), background .15s ease, border-color .15s ease, color .15s ease;
+  }
+  .action-btn:active{ transform: scale(.93); }
+  .action-btn svg{ width:28px; height:28px; flex-shrink:0; }
 
-  .cam-toggle-btn{ color: var(--text-muted); }
   .cam-toggle-btn.off{ color: var(--laser); border-color: var(--laser-soft); background: rgba(255,90,54,.08); }
 
   .cart-action-btn{
-    position:relative;
-    background: linear-gradient(160deg, var(--surface-raised), var(--surface));
     color: var(--amber);
     border-color: var(--amber-soft);
   }
   .cart-action-btn .badge{
-    position:absolute; top:-6px; right:14px;
-    min-width:22px; height:22px; padding:0 5px;
-    border-radius:11px; background:var(--amber); color:#1a1200;
-    font-family: var(--font-display); font-weight:700; font-size:12px;
+    position:absolute; top:-7px; right:-7px;
+    min-width:26px; height:26px; padding:0 6px;
+    border-radius:13px; background:var(--amber); color:#1a1200;
+    font-family: var(--font-display); font-weight:700; font-size:12.5px;
     display:flex; align-items:center; justify-content:center;
+    box-shadow: 0 6px 16px -4px rgba(255,90,54,.6);
     transform: scale(0); transition: transform .18s cubic-bezier(.3,1.6,.4,1);
   }
   .cart-action-btn .badge.show{ transform:scale(1); }
@@ -724,6 +732,26 @@
   .primary-btn:active{ transform: scale(.97); }
   .primary-btn:disabled{ opacity:.35; box-shadow:none; }
 
+  /* Fila de acciones del carrito: escanear otro producto (rápido, a la
+     izquierda) + generar QR (acción principal, ocupa el resto). */
+  .sheet-footer-actions{
+    display:flex;
+    gap:10px;
+  }
+  .sheet-footer-actions .primary-btn{ flex:1; width:auto; }
+  .scan-more-btn{
+    flex:0 0 auto;
+    width:56px; height:56px;
+    border-radius:18px;
+    background: var(--surface);
+    border: 1.5px solid var(--amber-soft);
+    color: var(--amber);
+    display:flex; align-items:center; justify-content:center;
+    transition: transform .12s ease, background .15s ease;
+  }
+  .scan-more-btn svg{ width:23px; height:23px; }
+  .scan-more-btn:active{ transform: scale(.94); background: var(--surface-raised); }
+
   /* ---------- CHECKOUT SCREEN (misma identidad oscura/naranja de la app) ---------- */
   .checkout-screen{
     background:
@@ -1072,7 +1100,7 @@
           <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
           <circle cx="12" cy="13" r="4"/>
         </svg>
-        <span id="camToggleLabel">Apagar cámara</span>
+        <span id="camToggleLabel" class="sr-only">Apagar cámara</span>
       </button>
       <button id="cartBadgeBtn" class="action-btn cart-action-btn" aria-label="Ver mi carrito">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -1080,7 +1108,7 @@
           <circle cx="18" cy="21" r="1.4" fill="currentColor" stroke="none"/>
           <path d="M2.5 3h2.4l2.1 11.4a2 2 0 0 0 2 1.6h8.3a2 2 0 0 0 2-1.6L21 7H6"/>
         </svg>
-        <span>Carrito</span>
+        <span class="sr-only">Carrito</span>
         <span id="cartBadgeCount" class="badge">0</span>
       </button>
     </div>
@@ -1109,14 +1137,22 @@
         <span>Total del pedido</span>
         <strong id="cartTotalAmount">Bs 0</strong>
       </div>
-      <button id="genQrBtn" class="primary-btn" disabled>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
-          <rect x="3" y="14" width="7" height="7" rx="1"/>
-          <path d="M14 14h3v3h-3zM20 14v3M14 20h3M20 20v.01"/>
-        </svg>
-        Generar código QR
-      </button>
+      <div class="sheet-footer-actions">
+        <button id="scanMoreBtn" class="scan-more-btn" aria-label="Escanear otro producto" title="Escanear otro producto">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+            <circle cx="12" cy="13" r="4"/>
+          </svg>
+        </button>
+        <button id="genQrBtn" class="primary-btn" disabled>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+            <rect x="3" y="14" width="7" height="7" rx="1"/>
+            <path d="M14 14h3v3h-3zM20 14v3M14 20h3M20 20v.01"/>
+          </svg>
+          Generar código QR
+        </button>
+      </div>
     </div>
   </div>
 
@@ -2932,6 +2968,7 @@ var qrcode = function() {
   var cartList = document.getElementById('cartList');
   var cartTotalAmount = document.getElementById('cartTotalAmount');
   var genQrBtn = document.getElementById('genQrBtn');
+  var scanMoreBtn = document.getElementById('scanMoreBtn');
 
   var unitsPopupBackdrop = document.getElementById('unitsPopupBackdrop');
   var unitsPopup = document.getElementById('unitsPopup');
@@ -3552,6 +3589,15 @@ var qrcode = function() {
   cartBadgeBtn.addEventListener('click', openSheet);
   sheetBackdrop.addEventListener('click', closeSheet);
   trashBtn.addEventListener('click', clearCart);
+
+  // Desde el carrito, vuelve directo a escanear sin pasos extra: cierra
+  // la hoja del carrito y enciende la cámara al instante (aunque estuviera
+  // en pausa por haber abierto el carrito, o en modo teclado).
+  scanMoreBtn.addEventListener('click', function(){
+    vibrate(10);
+    closeSheet();
+    setMode('camera');
+  });
 
   // ---------- Generar QR ----------
   var MAX_ITEMS_QR = 15;
