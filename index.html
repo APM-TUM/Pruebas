@@ -409,6 +409,29 @@
   }
   .cam-fallback svg{ width:34px; height:34px; opacity:.6; }
 
+  .cam-paused{
+    position:absolute; inset:0;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:14px; text-align:center; padding: 0 30px;
+    color: var(--text-muted); font-size:13px;
+    background: var(--surface);
+    z-index:6;
+  }
+  .cam-paused svg{ width:34px; height:34px; opacity:.6; }
+  .cam-resume-btn{
+    padding: 11px 24px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--surface-raised);
+    color: var(--text);
+    font-family: var(--font-display);
+    font-weight:600;
+    font-size:13.5px;
+    letter-spacing:.01em;
+    cursor:pointer;
+  }
+  .cam-resume-btn:active{ transform: scale(.95); }
+
   /* manual entry */
   .manual-panel{
     flex:1;
@@ -838,6 +861,11 @@
         <div id="camFallback" class="cam-fallback hidden">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1l22 22"/><path d="M21 21H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h4"/><path d="M14.5 6l1.5 3H21a2 2 0 0 1 2 2v9.34"/><circle cx="12" cy="13" r="4"/></svg>
           <span>No pudimos activar la cámara.<br>Usa el teclado para digitar el código.</span>
+        </div>
+        <div id="camPaused" class="cam-paused hidden">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          <span>Cámara en pausa</span>
+          <button id="resumeCamBtn" class="cam-resume-btn" aria-label="Reanudar escaneo">Reanudar escaneo</button>
         </div>
       </div>
 
@@ -2675,6 +2703,8 @@ var qrcode = function() {
   var cameraPanel = document.getElementById('cameraPanel');
   var manualPanel = document.getElementById('manualPanel');
   var camFallback = document.getElementById('camFallback');
+  var camPaused = document.getElementById('camPaused');
+  var resumeCamBtn = document.getElementById('resumeCamBtn');
   var flashOk = document.getElementById('flashOk');
 
   var manualInput = document.getElementById('manualInput');
@@ -2957,6 +2987,7 @@ var qrcode = function() {
 
   // ---------- Camera ----------
   function startCamera(){
+    camPaused.classList.add('hidden');
     if (html5QrCode || cameraStarting) return;
     if (typeof Html5Qrcode === 'undefined'){ showCamFallback(); return; }
     cameraStarting = true;
@@ -3007,6 +3038,27 @@ var qrcode = function() {
   function showCamFallback(){
     camFallback.classList.remove('hidden');
   }
+
+  // Apaga realmente el stream de la cámara (no solo la oculta visualmente)
+  // y muestra el botón para reactivarla, evitando que el teléfono se
+  // caliente mientras el usuario está en el carrito u otra pantalla.
+  function pauseCamera(){
+    stopCamera();
+    if (modeCameraBtn.classList.contains('selected')){
+      camPaused.classList.remove('hidden');
+    }
+  }
+
+  resumeCamBtn.addEventListener('click', function(){
+    vibrate(10);
+    startCamera();
+  });
+
+  // Si la app pasa a segundo plano (cambio de app, bloqueo de pantalla),
+  // apaga la cámara también.
+  document.addEventListener('visibilitychange', function(){
+    if (document.hidden) pauseCamera();
+  });
 
   // ---------- Scan handling ----------
   function handleScan(rawCode){
@@ -3144,6 +3196,7 @@ var qrcode = function() {
 
   // ---------- Cart sheet ----------
   function openSheet(){
+    pauseCamera();
     sheetBackdrop.classList.add('open');
     cartSheet.classList.add('open');
   }
@@ -3243,6 +3296,7 @@ var qrcode = function() {
   }
 
   function goToQrScreen(){
+    pauseCamera();
     scanner.classList.add('hidden');
     qrScreen.classList.remove('hidden');
     requestAnimationFrame(function(){ qrScreen.classList.add('active'); });
@@ -3259,6 +3313,7 @@ var qrcode = function() {
 
   // ---------- Datos del cliente (paso previo a generar el QR) ----------
   function goToCheckoutScreen(){
+    pauseCamera();
     closeSheet();
     checkoutTotalEl.textContent = String(totalQty());
     scanner.classList.add('hidden');
