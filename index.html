@@ -3621,17 +3621,76 @@ var qrcode = function() {
         ctx.textAlign = 'left';
         y += padding - 10;
 
-        /* recorte final a la altura realmente usada */
+        /* ---- Componer la tarjeta final ----
+           En vez de exportar un rectángulo plano de esquina recta, se
+           recorta el contenido a la altura realmente usada y se monta
+           sobre un lienzo un poco más grande: fondo claro exterior +
+           tarjeta blanca de esquinas redondeadas con sombra suave y una
+           franja superior de acento, igual que la tarjeta ("hoja") que
+           se ve en la pantalla del comprobante. */
         var finalHeight = Math.ceil(y);
+
+        var outerPad = 20;   // margen del fondo claro alrededor de la tarjeta
+        var cardRadius = 16; // esquinas redondeadas de la tarjeta
+        var accentH = 4;     // franja superior de acento
+
+        var outW = width + outerPad * 2;
+        var outH = finalHeight + outerPad * 2;
+
+        function roundRectPath(c, rx, ry, rw, rh, rr){
+          c.beginPath();
+          c.moveTo(rx + rr, ry);
+          c.arcTo(rx + rw, ry,      rx + rw, ry + rh, rr);
+          c.arcTo(rx + rw, ry + rh, rx,      ry + rh, rr);
+          c.arcTo(rx,      ry + rh, rx,      ry,      rr);
+          c.arcTo(rx,      ry,      rx + rw, ry,      rr);
+          c.closePath();
+        }
+
         var finalCanvas = document.createElement('canvas');
-        finalCanvas.width = width * scale;
-        finalCanvas.height = finalHeight * scale;
+        finalCanvas.width = outW * scale;
+        finalCanvas.height = outH * scale;
         var fctx = finalCanvas.getContext('2d');
+        fctx.scale(scale, scale);
+
+        // Fondo claro exterior (mismo tono que la pantalla del comprobante)
+        fctx.fillStyle = '#F1F3F7';
+        fctx.fillRect(0, 0, outW, outH);
+
+        // Sombra suave para que la tarjeta "flote" como una hoja
+        fctx.save();
+        fctx.shadowColor = 'rgba(17,24,39,0.16)';
+        fctx.shadowBlur = 22;
+        fctx.shadowOffsetY = 10;
+        fctx.fillStyle = '#ffffff';
+        roundRectPath(fctx, outerPad, outerPad, width, finalHeight, cardRadius);
+        fctx.fill();
+        fctx.restore();
+
+        // Contenido del comprobante, recortado a las esquinas redondeadas
+        fctx.save();
+        roundRectPath(fctx, outerPad, outerPad, width, finalHeight, cardRadius);
+        fctx.clip();
         fctx.drawImage(
           canvas,
           0, 0, width * scale, finalHeight * scale,
-          0, 0, width * scale, finalHeight * scale
+          outerPad, outerPad, width, finalHeight
         );
+        fctx.restore();
+
+        // Franja superior de acento (el mismo detalle azul del ticket en pantalla)
+        fctx.save();
+        roundRectPath(fctx, outerPad, outerPad, width, finalHeight, cardRadius);
+        fctx.clip();
+        fctx.fillStyle = colAccent;
+        fctx.fillRect(outerPad, outerPad, width, accentH);
+        fctx.restore();
+
+        // Borde fino de la tarjeta
+        roundRectPath(fctx, outerPad, outerPad, width, finalHeight, cardRadius);
+        fctx.strokeStyle = '#E3E6EB';
+        fctx.lineWidth = 1;
+        fctx.stroke();
 
         return await new Promise(function(resolve){
           finalCanvas.toBlob(function(blob){ resolve(blob); }, 'image/png');
