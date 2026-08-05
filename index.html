@@ -585,7 +585,22 @@
     transition: opacity .35s ease, transform .35s ease;
   }
   .qr-screen.active{ opacity:1; transform:none; }
-  .qr-screen .brand{ color:#11182B; }
+  .qr-topbar{ justify-content:flex-start; }
+  .back-pill{
+    display:inline-flex; align-items:center; gap:7px;
+    background:#1E3A5F;
+    border:1px solid #1E3A5F;
+    color:#fff;
+    font-family: var(--font-mono);
+    font-weight:700;
+    font-size:12.5px;
+    padding:11px 18px;
+    border-radius:999px;
+    box-shadow: 0 4px 12px rgba(30,58,95,.25), 0 1px 2px rgba(30,58,95,.3);
+    transition: transform .12s ease;
+  }
+  .back-pill svg{ width:15px; height:15px; flex-shrink:0; }
+  .back-pill:active{ transform: scale(.96); }
 
   .icon-nav-btn{
     width:44px; height:44px; border-radius:14px;
@@ -595,7 +610,6 @@
     flex-shrink:0;
     transition: transform .12s ease;
   }
-  .qr-screen .icon-nav-btn{ background:#11182B; border-color:#11182B; color:#fff; }
   .icon-nav-btn svg{ width:20px; height:20px; }
   .icon-nav-btn:active{ transform: scale(.9); }
 
@@ -987,17 +1001,10 @@
 
   <!-- ================= QR SCREEN ================= -->
   <div id="qrScreen" class="screen qr-screen hidden">
-    <div class="topbar">
-      <button id="qrBackBtn" class="icon-nav-btn" aria-label="Volver a escanear">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-      </button>
-      <div class="brand"><span class="brand-dot"></span>Mi código QR</div>
-      <button id="qrCartBtn" class="icon-nav-btn" aria-label="Editar productos">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="9" cy="21" r="1.4" fill="var(--text)" stroke="none"/>
-          <circle cx="18" cy="21" r="1.4" fill="var(--text)" stroke="none"/>
-          <path d="M2.5 3h2.4l2.1 11.4a2 2 0 0 0 2 1.6h8.3a2 2 0 0 0 2-1.6L21 7H6"/>
-        </svg>
+    <div class="topbar qr-topbar">
+      <button id="qrBackBtn" class="back-pill">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        Volver a editar mi compra
       </button>
     </div>
 
@@ -2740,7 +2747,6 @@ var qrcode = function() {
 
   var qrScreen = document.getElementById('qrScreen');
   var qrBackBtn = document.getElementById('qrBackBtn');
-  var qrCartBtn = document.getElementById('qrCartBtn');
   var qrFecha = document.getElementById('qrFecha');
   var qrItemsEl = document.getElementById('qrItems');
   var qrTotalEl = document.getElementById('qrTotal');
@@ -3300,13 +3306,7 @@ var qrcode = function() {
     qrPedidoId.textContent = payload.Ped_Id;
     qrFecha.textContent = payload.Ven_Fecha + ' ' + payload.Ven_Hora;
     qrClienteNombre.textContent = payload.Ven_Cliente || 'Cliente sin registrar';
-
-    if (payload.Ven_Nit){
-      qrClienteNitRow.classList.remove('hidden');
-      qrClienteNit.textContent = payload.Ven_Nit;
-    } else {
-      qrClienteNitRow.classList.add('hidden');
-    }
+    qrClienteNit.textContent = payload.Ven_Nit || '';
 
     qrItemsEl.innerHTML = '';
     payload.items.forEach(function(it){
@@ -3390,12 +3390,6 @@ var qrcode = function() {
 
   qrBackBtn.addEventListener('click', volverAEscanear);
 
-  // Acceso rápido al carrito desde la pantalla del QR, para agregar
-  // el producto que se te olvidó y volver a generar el código.
-  qrCartBtn.addEventListener('click', function(){
-    renderCart();
-    openSheet();
-  });
   editQrBtn.addEventListener('click', function(){
     volverAEscanear();
     setTimeout(function(){ renderCart(); openSheet(); }, 210);
@@ -3515,7 +3509,7 @@ var qrcode = function() {
         metaRow('Pedido', payload.Ped_Id);
         metaRow('Fecha', payload.Ven_Fecha + ' ' + payload.Ven_Hora);
         metaRow('Cliente', payload.Ven_Cliente || 'Cliente sin registrar');
-        if (payload.Ven_Nit) metaRow('NIT', payload.Ven_Nit);
+        metaRow('NIT', payload.Ven_Nit || '');
 
         divider();
 
