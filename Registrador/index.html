@@ -1,0 +1,1407 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>A TUM Ti · Registrar Ventas</title>
+<meta name="theme-color" content="#111827">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #111827;
+  --ink-soft: #1C2531;
+  --ink-line: #2B3444;
+  --accent: #1E3A5F;
+  --accent-bright: #2C5282;
+  /* Verde de selección: SOLO para "confirmado / en línea / completado".
+     Nunca para marca ni estructura — así se distingue de un vistazo. */
+  --success: #1B8A5A;
+  --success-bright: #22A06B;
+  --success-soft: rgba(27,138,90,0.14);
+  --danger: #D64545;
+  --danger-soft: rgba(214,69,69,0.1);
+  --amber: #c9821c;
+  --amber-bright: #E0A542;
+  --bg: #F6F7F9;
+  --card: #ffffff;
+  --line: #E3E6EB;
+  --text: #1A202C;
+  --text-mute: #697386;
+  --mono: "JetBrains Mono", "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --display: "Space Grotesk", var(--sans);
+  --radius: 14px;
+  /* Sombras "gama alta": capas suaves en vez de un solo borde plano */
+  --shadow-card: 0 1px 2px rgba(17,24,39,0.04), 0 6px 20px rgba(17,24,39,0.06);
+  --shadow-primary: 0 4px 12px rgba(30,58,95,0.22), 0 1px 2px rgba(30,58,95,0.3);
+  --shadow-primary-hover: 0 8px 22px rgba(30,58,95,0.28), 0 2px 4px rgba(30,58,95,0.3);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  -webkit-tap-highlight-color: transparent;
+}
+
+body { padding-bottom: 24px; min-height: 100vh; }
+button { font-family: inherit; cursor: pointer; }
+input:focus-visible, button:focus-visible { outline: 2px solid var(--accent-bright); outline-offset: 2px; }
+
+/* ---------- Topbar ---------- */
+
+.topbar {
+  position: sticky; top: 0; z-index: 20;
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--ink); color: #fff; padding: 13px 18px;
+  border-bottom: 1px solid var(--ink-line);
+  box-shadow: 0 1px 0 rgba(44,82,130,0.15);
+}
+.brand { display: flex; align-items: center; gap: 11px; }
+.brand-mark {
+  font-family: var(--mono); font-weight: 700; color: var(--accent-bright); font-size: 15px; line-height: 1;
+  width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
+  background: var(--ink-soft); border: 1px solid var(--ink-line); border-radius: 8px;
+}
+.brand-text { display: flex; flex-direction: column; line-height: 1.2; }
+.brand-text strong { font-family: var(--display); font-size: 15.5px; font-weight: 700; letter-spacing: 0.01em; }
+.brand-text small { color: #7D8A9C; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.11em; font-weight: 600; }
+.topbar-right { display: flex; align-items: center; gap: 10px; }
+
+.status-pill {
+  font-family: var(--mono); font-size: 10.5px; padding: 5px 10px; border-radius: 999px;
+  border: 1px solid transparent; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600;
+  display: inline-flex; align-items: center; gap: 5px;
+}
+.status-pill::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.status-online { background: var(--success-soft); color: var(--success-bright); border-color: rgba(27,138,90,0.4); }
+.status-offline { background: rgba(224,165,66,0.16); color: var(--amber-bright); border-color: rgba(224,165,66,0.4); }
+
+.pending-btn {
+  background: var(--amber); color: #fff; border: none; border-radius: 999px;
+  padding: 8px 14px; font-size: 13px; font-family: var(--mono); font-weight: 700;
+  display: flex; align-items: center; gap: 6px; letter-spacing: 0.02em;
+}
+
+/* ---------- Layout ---------- */
+
+.view { max-width: 640px; margin: 0 auto; padding: 20px 18px; }
+.view-header { margin-bottom: 6px; }
+.back-btn {
+  background: none; border: none; color: var(--accent); font-weight: 600; font-size: 13.5px;
+  padding: 6px 0; font-family: var(--mono); letter-spacing: 0.01em;
+}
+
+h2 { font-family: var(--display); font-size: 19px; font-weight: 700; margin: 6px 0 14px; letter-spacing: -0.01em; }
+
+.hint { color: var(--text-mute); font-size: 13px; line-height: 1.55; }
+
+/* ---------- Escaneo ---------- */
+
+.scan-tabs {
+  display: flex; gap: 4px; margin-bottom: 18px; background: var(--card);
+  border: 1px solid var(--line); border-radius: var(--radius); padding: 4px;
+}
+.scan-tab {
+  flex: 1; padding: 10px 0; border-radius: 8px; border: none;
+  background: transparent; color: var(--text-mute); font-weight: 600; font-size: 13.5px;
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.scan-tab svg { width: 15px; height: 15px; flex-shrink: 0; }
+.scan-tab.active { background: var(--ink); color: #fff; }
+
+.scan-pane { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+
+.camera-frame {
+  position: relative; width: 100%; max-width: 320px; aspect-ratio: 1 / 1;
+  background: radial-gradient(circle at 50% 40%, #17202E 0%, #0B0F17 100%);
+  border-radius: 16px; overflow: hidden; border: 1px solid var(--ink-line);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02);
+}
+#video { width: 100%; height: 100%; object-fit: cover; }
+
+.camera-reticle { position: absolute; inset: 16%; pointer-events: none; }
+.reticle-corner {
+  position: absolute; width: 26px; height: 26px;
+  border: 2.5px solid var(--accent-bright); opacity: 0.9;
+}
+.reticle-corner.tl { top: 0; left: 0; border-right: none; border-bottom: none; border-radius: 6px 0 0 0; }
+.reticle-corner.tr { top: 0; right: 0; border-left: none; border-bottom: none; border-radius: 0 6px 0 0; }
+.reticle-corner.bl { bottom: 0; left: 0; border-right: none; border-top: none; border-radius: 0 0 0 6px; }
+.reticle-corner.br { bottom: 0; right: 0; border-left: none; border-top: none; border-radius: 0 0 6px 0; }
+
+.scan-line {
+  position: absolute; left: 16%; right: 16%; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent-bright), transparent);
+  box-shadow: 0 0 8px 1px rgba(44,82,130,0.6);
+  animation: scanSweep 2.4s ease-in-out infinite;
+  opacity: 0.85;
+}
+@keyframes scanSweep {
+  0%, 100% { top: 16%; }
+  50% { top: calc(84% - 2px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .scan-line { animation: none; top: 50%; }
+}
+
+.camera-hud-label {
+  position: absolute; bottom: 10px; left: 0; right: 0; text-align: center;
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
+  color: rgba(255,255,255,0.4);
+}
+
+.primary-btn {
+  width: 100%; border: none; background: linear-gradient(135deg, var(--ink-soft) 0%, var(--ink) 100%); color: #fff; padding: 15px;
+  border-radius: var(--radius); font-size: 14.5px; font-weight: 700; letter-spacing: 0.01em; margin-top: 6px;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  box-shadow: 0 4px 14px rgba(17,24,39,0.24), 0 1px 2px rgba(17,24,39,0.3);
+  transition: transform 0.1s ease, opacity 0.15s ease, box-shadow 0.2s ease;
+}
+.primary-btn:disabled { opacity: 0.38; box-shadow: none; }
+.primary-btn:hover:not(:disabled) { box-shadow: 0 8px 22px rgba(17,24,39,0.3), 0 2px 4px rgba(17,24,39,0.3); }
+.primary-btn:active:not(:disabled) { transform: scale(0.98); box-shadow: 0 2px 8px rgba(17,24,39,0.24); }
+
+.ghost-btn {
+  border: 1px solid var(--line); background: var(--card); color: var(--text-mute);
+  border-radius: var(--radius); padding: 10px 18px; font-size: 13px; font-weight: 600;
+}
+
+.upload-drop {
+  width: 100%; max-width: 320px; border: 1.5px dashed var(--line); border-radius: var(--radius);
+  background: var(--card); padding: 30px 16px; text-align: center; color: var(--text-mute);
+  font-size: 13.5px; font-weight: 600; display: flex; flex-direction: column; align-items: center; gap: 10px;
+  cursor: pointer; transition: border-color 0.15s ease, background 0.15s ease;
+}
+.upload-drop:hover { border-color: var(--accent); background: rgba(30,58,95,0.04); }
+.upload-drop svg { width: 26px; height: 26px; color: var(--text-mute); }
+.upload-drop input { display: none; }
+
+.scan-error {
+  margin-top: 14px; background: #fdeee0; color: #9a4a12; border: 1px solid #f2c99a;
+  border-radius: var(--radius); padding: 11px 14px; font-size: 13px; text-align: center; line-height: 1.5;
+}
+
+/* ---------- Revisión ---------- */
+
+.ticket-meta {
+  font-family: var(--mono); font-size: 12.5px; color: var(--text-mute); display: flex; flex-direction: column;
+  gap: 7px; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px;
+}
+.ticket-meta div { display: flex; justify-content: space-between; gap: 10px; }
+.ticket-meta span:last-child { color: var(--text); text-align: right; font-weight: 600; }
+
+.review-items { margin: 16px 0; font-size: 14px; display: flex; flex-direction: column; gap: 8px; }
+.review-items .ti-row {
+  display: grid; grid-template-columns: 1fr 34px auto; align-items: center; column-gap: 12px;
+  background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 11px 15px; font-family: var(--sans);
+}
+.review-items .ti-name { font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.review-items .ti-qty { color: var(--text-mute); font-family: var(--mono); font-size: 12px; text-align: right; }
+.review-items .ti-amount { font-family: var(--mono); font-weight: 700; text-align: right; }
+
+/* ---------- Edición del pedido en caja ---------- */
+
+.rev-item-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+  background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 11px 14px;
+}
+.rev-item-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1 1 120px; }
+.rev-item-info .ti-name { font-weight: 600; font-size: 13.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rev-item-info .ti-amount { font-family: var(--mono); font-size: 12.5px; color: var(--text-mute); font-weight: 600; text-align: left; }
+
+.qty-stepper { display: flex; align-items: center; gap: 7px; flex-shrink: 0; }
+.qty-btn {
+  width: 28px; height: 28px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg);
+  font-size: 16px; font-weight: 700; color: var(--text); display: flex; align-items: center; justify-content: center;
+  line-height: 1;
+}
+.qty-btn:active { transform: scale(0.94); }
+.qty-val { font-family: var(--mono); font-weight: 700; min-width: 20px; text-align: center; font-size: 13.5px; }
+
+.ti-remove {
+  width: 30px; height: 30px; border-radius: 8px; border: none; background: var(--danger-soft); color: var(--danger);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.ti-remove svg { width: 15px; height: 15px; }
+
+.add-product-btn {
+  width: 100%; border: 1.5px dashed var(--line); background: var(--card); color: var(--accent);
+  border-radius: var(--radius); padding: 12px; font-weight: 700; font-size: 13.5px;
+  display: flex; align-items: center; justify-content: center; gap: 7px; margin-top: 10px;
+}
+.add-product-btn:active { transform: scale(0.98); }
+
+.edited-note {
+  background: rgba(224,165,66,0.14); color: #9a6a12; border: 1px solid rgba(224,165,66,0.4);
+  border-radius: var(--radius); padding: 9px 12px; font-size: 12.5px; margin-top: 10px; text-align: center; line-height: 1.5;
+}
+
+.review-empty {
+  text-align: center; color: var(--text-mute); font-size: 13px; padding: 20px 10px;
+  border: 1px dashed var(--line); border-radius: var(--radius); background: var(--card);
+}
+
+/* ---------- Modal: agregar producto ---------- */
+
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(17,24,39,0.55);
+  display: flex; align-items: flex-end; justify-content: center; z-index: 60;
+}
+.modal-overlay[hidden] { display: none; }
+.modal-sheet {
+  background: var(--card); width: 100%; max-width: 640px;
+  border-radius: 18px 18px 0 0; max-height: 82vh; display: flex; flex-direction: column;
+  box-shadow: 0 -8px 30px rgba(0,0,0,0.28);
+}
+.modal-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 18px 10px; border-bottom: 1px solid var(--line); flex-shrink: 0;
+}
+.modal-head h3 { font-family: var(--display); font-size: 16px; margin: 0; font-weight: 700; }
+.modal-close-btn {
+  background: var(--bg); border: none; width: 30px; height: 30px; border-radius: 50%;
+  font-size: 18px; color: var(--text-mute); display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.modal-search {
+  margin: 12px 18px 8px; padding: 12px 14px; border-radius: var(--radius); border: 1px solid var(--line);
+  font-size: 16px; font-family: inherit; flex-shrink: 0;
+}
+.modal-list { overflow-y: auto; padding: 4px 12px 18px; display: flex; flex-direction: column; gap: 8px; }
+.modal-product-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 11px 14px; width: 100%; text-align: left;
+}
+.modal-product-row .mp-name { font-weight: 600; font-size: 13.5px; }
+.modal-product-row .mp-price { font-family: var(--mono); color: var(--text-mute); font-size: 12.5px; margin-top: 2px; }
+.modal-product-row .mp-add {
+  background: var(--accent); color: #fff; border: none; border-radius: 999px;
+  width: 32px; height: 32px; font-size: 19px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  line-height: 1;
+}
+.modal-product-row .mp-add:active { transform: scale(0.92); }
+.modal-empty { text-align: center; color: var(--text-mute); font-size: 13px; padding: 26px 14px; line-height: 1.6; }
+
+.modal-scan-toggle {
+  margin: 0 18px 10px; border: 1.5px dashed var(--line); background: var(--bg); color: var(--accent);
+  border-radius: var(--radius); padding: 10px; font-weight: 700; font-size: 13px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+}
+.modal-scan-toggle svg { width: 15px; height: 15px; flex-shrink: 0; }
+.modal-scan-toggle.active { background: var(--ink); color: #fff; border-style: solid; border-color: var(--ink); }
+.modal-scan-toggle:active { transform: scale(0.98); }
+
+.modal-camera-pane { margin: 0 18px 12px; display: flex; flex-direction: column; align-items: center; gap: 8px; flex-shrink: 0; }
+.modal-camera-frame {
+  position: relative; width: 100%; max-width: 280px; aspect-ratio: 4 / 3;
+  background: radial-gradient(circle at 50% 40%, #17202E 0%, #0B0F17 100%);
+  border-radius: 14px; overflow: hidden; border: 1px solid var(--ink-line);
+}
+#modalVideo { width: 100%; height: 100%; object-fit: cover; }
+.modal-camera-frame .reticle-corner { width: 20px; height: 20px; }
+.modal-camera-hint { font-size: 12px; color: var(--text-mute); text-align: center; margin: 0; }
+.modal-scan-error {
+  font-size: 12.5px; color: #9a4a12; background: #fdeee0; border: 1px solid #f2c99a;
+  border-radius: var(--radius); padding: 8px 12px; margin: 0 18px 10px; text-align: center; line-height: 1.5; flex-shrink: 0;
+}
+.modal-list-divider {
+  display: flex; align-items: center; gap: 10px; margin: 2px 18px 6px; color: var(--text-mute);
+  font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; flex-shrink: 0;
+}
+.modal-list-divider::before, .modal-list-divider::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+
+.cart-total-row {
+  display: flex; justify-content: space-between; align-items: center; padding: 16px 4px;
+  border-top: 1.5px dashed var(--ink-line, var(--line)); border-top-color: var(--line); font-size: 15px;
+}
+.cart-total-row strong { font-family: var(--mono); font-size: 21px; color: var(--ink); }
+
+/* ---------- Cobro ---------- */
+
+.field { font-size: 13px; font-weight: 600; color: var(--text-mute); display: flex; flex-direction: column; gap: 7px; margin: 16px 0; }
+.field input {
+  padding: 13px 14px; border-radius: var(--radius); border: 1px solid var(--line);
+  font-size: 16px; font-family: var(--mono); font-weight: 600; color: var(--text); background: var(--card);
+}
+.field input:disabled { background: var(--bg); color: var(--text-mute); }
+
+.pago-tabs { display: flex; gap: 8px; margin: 14px 0; }
+.pago-tab {
+  flex: 1; padding: 13px 0; border-radius: var(--radius); border: 1.5px solid var(--line);
+  background: var(--card); color: var(--text-mute); font-weight: 700; font-size: 14px;
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.pago-tab svg { width: 16px; height: 16px; }
+.pago-tab.active { background: var(--ink); color: #fff; border-color: var(--ink); }
+.pago-tab.active.pago-qr { background: var(--accent); border-color: var(--accent); }
+
+.checkout-summary {
+  background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 13px 16px; font-family: var(--mono); margin-top: 10px;
+}
+.checkout-summary .row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; font-size: 13.5px; color: var(--text-mute); }
+.checkout-summary .row strong { font-size: 16px; color: var(--text); font-weight: 700; }
+
+/* ---------- Confirmación ---------- */
+
+.done-box { text-align: center; padding: 34px 10px 10px; }
+.done-check {
+  width: 60px; height: 60px; border-radius: 50%;
+  background: var(--success); color: #fff; border: 4px solid rgba(27,138,90,0.15);
+  font-size: 26px; display: flex; align-items: center; justify-content: center; margin: 0 auto 18px;
+}
+.done-check svg { width: 26px; height: 26px; }
+
+/* ---------- Pendientes ---------- */
+
+.cart-items { display: flex; flex-direction: column; gap: 10px; margin: 16px 0; }
+.pending-item {
+  background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 13px 15px; font-size: 13.5px; display: flex; justify-content: space-between; gap: 10px;
+}
+.pending-item .p-id { font-family: var(--mono); color: var(--text-mute); font-size: 12px; }
+
+/* ---------- Toast ---------- */
+
+.toast {
+  position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+  background: var(--ink); color: #fff; padding: 11px 20px; border-radius: 999px;
+  font-size: 13px; font-weight: 500; z-index: 50; box-shadow: 0 10px 28px rgba(0,0,0,0.28);
+  text-align: center; max-width: 90%; border: 1px solid var(--ink-line);
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-mark">&gt;_</span>
+    <div class="brand-text">
+      <strong>A TUM Ti</strong>
+      <small>Registrar ventas</small>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <span id="statusPill" class="status-pill status-online">en línea</span>
+    <button id="pendingBtn" class="pending-btn" hidden aria-label="Pendientes por sincronizar">
+      <svg viewBox="0 0 24 24" fill="none" width="14" height="14"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 7v5l3 3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <span id="pendingCount">0</span>
+    </button>
+  </div>
+</header>
+
+<!-- ------- Escaneo ------- -->
+<section id="scanView" class="view">
+  <div class="scan-tabs">
+    <button id="tabCamera" class="scan-tab active" data-mode="camera">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M4 8a2 2 0 0 1 2-2h1.2l.9-1.5A1.5 1.5 0 0 1 9.4 4h5.2a1.5 1.5 0 0 1 1.3.75L16.8 6H18a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8z" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="13" r="3.2" stroke="currentColor" stroke-width="1.8"/></svg>
+      Usar cámara
+    </button>
+    <button id="tabUpload" class="scan-tab" data-mode="upload">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M12 15V4m0 0L8 8m4-4 4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 15v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      Subir captura
+    </button>
+  </div>
+
+  <div id="cameraPane" class="scan-pane">
+    <div class="camera-frame">
+      <video id="video" playsinline muted></video>
+      <div class="scan-line"></div>
+      <div class="camera-reticle">
+        <span class="reticle-corner tl"></span>
+        <span class="reticle-corner tr"></span>
+        <span class="reticle-corner bl"></span>
+        <span class="reticle-corner br"></span>
+      </div>
+      <div class="camera-hud-label">Esperando código QR</div>
+    </div>
+    <button id="startCameraBtn" class="primary-btn">
+      <svg viewBox="0 0 24 24" fill="none" width="16" height="16"><path d="M4 8a2 2 0 0 1 2-2h1.2l.9-1.5A1.5 1.5 0 0 1 9.4 4h5.2a1.5 1.5 0 0 1 1.3.75L16.8 6H18a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8z" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="13" r="3.2" stroke="currentColor" stroke-width="1.8"/></svg>
+      Activar cámara
+    </button>
+    <button id="stopCameraBtn" class="ghost-btn" hidden>Detener cámara</button>
+    <p id="cameraHint" class="hint"></p>
+  </div>
+
+  <div id="uploadPane" class="scan-pane" hidden>
+    <label class="upload-drop" for="fileInput">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M12 15V4m0 0L8 8m4-4 4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 15v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      <span>Toca para elegir una captura guardada</span>
+      <input type="file" id="fileInput" accept="image/*">
+    </label>
+    <p class="hint">Acepta capturas de pantalla o fotos del código QR del pedido.</p>
+  </div>
+
+  <p id="scanError" class="scan-error" hidden></p>
+</section>
+
+<!-- ------- Revisión del pedido ------- -->
+<section id="reviewView" class="view" hidden>
+  <div class="view-header">
+    <button class="back-btn" data-back="scanView">← escanear otro</button>
+  </div>
+  <h2>Pedido leído</h2>
+  <div class="ticket-meta">
+    <div><span>Pedido</span><span id="revPedidoId"></span></div>
+    <div><span>Fecha</span><span id="revFecha"></span></div>
+    <div><span>Cliente</span><span id="revCliente"></span></div>
+    <div><span>Celular</span><span id="revCelular"></span></div>
+    <div id="revNitRow" hidden><span>NIT</span><span id="revNit"></span></div>
+  </div>
+  <div id="revItems" class="ticket-items review-items"></div>
+  <button id="addProductBtn" type="button" class="add-product-btn">
+    <svg viewBox="0 0 24 24" fill="none" width="15" height="15"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+    Agregar producto olvidado
+  </button>
+  <p id="revEditedNote" class="edited-note" hidden>✎ Este pedido fue editado en caja: la lista ya no coincide con la del QR original.</p>
+  <div class="cart-total-row">
+    <span>Total a cobrar</span>
+    <strong id="revTotal">Bs 0</strong>
+  </div>
+  <button id="goPagoBtn" class="primary-btn">Continuar al cobro</button>
+</section>
+
+<!-- ------- Modal: agregar producto olvidado ------- -->
+<div id="addProductModal" class="modal-overlay" hidden>
+  <div class="modal-sheet">
+    <div class="modal-head">
+      <h3>Agregar producto al pedido</h3>
+      <button id="addProductCloseBtn" type="button" class="modal-close-btn" aria-label="Cerrar">×</button>
+    </div>
+    <input type="text" id="addProductSearch" class="modal-search" placeholder="Buscar producto…">
+
+    <button id="modalScanToggleBtn" type="button" class="modal-scan-toggle">
+      <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="2" height="14" fill="currentColor"/><rect x="6.5" y="5" width="1" height="14" fill="currentColor"/><rect x="9" y="5" width="3" height="14" fill="currentColor"/><rect x="14" y="5" width="1" height="14" fill="currentColor"/><rect x="16.5" y="5" width="2" height="14" fill="currentColor"/><rect x="20" y="5" width="1" height="14" fill="currentColor"/></svg>
+      Escanear código de barras
+    </button>
+    <div id="modalCameraPane" class="modal-camera-pane" hidden>
+      <div class="modal-camera-frame">
+        <video id="modalVideo" playsinline muted></video>
+        <div class="camera-reticle">
+          <span class="reticle-corner tl"></span>
+          <span class="reticle-corner tr"></span>
+          <span class="reticle-corner bl"></span>
+          <span class="reticle-corner br"></span>
+        </div>
+      </div>
+      <p class="modal-camera-hint">Apunta al código de barras del producto.</p>
+    </div>
+    <p id="modalScanError" class="modal-scan-error" hidden></p>
+
+    <div id="addProductList" class="modal-list"></div>
+  </div>
+</div>
+
+<!-- ------- Cobro / pago ------- -->
+<section id="pagoView" class="view" hidden>
+  <div class="view-header">
+    <button class="back-btn" data-back="reviewView">← volver al pedido</button>
+  </div>
+  <h2>Registrar pago</h2>
+  <p class="hint">Confirma el monto recibido antes de guardar la venta. La venta queda como <strong>FINALIZADO</strong> recién al guardarse.</p>
+
+  <div class="checkout-summary">
+    <div class="row"><span>Total del pedido</span><strong id="pagoTotal">Bs 0</strong></div>
+  </div>
+
+  <label class="field" style="margin-bottom: 0;">Tipo de pago</label>
+  <div class="pago-tabs">
+    <button type="button" id="tabEfectivo" class="pago-tab active" data-tipo="Efectivo">
+      <svg viewBox="0 0 24 24" fill="none"><rect x="2.5" y="6" width="19" height="12" rx="2" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="2.6" stroke="currentColor" stroke-width="1.8"/></svg>
+      Efectivo
+    </button>
+    <button type="button" id="tabQr" class="pago-tab pago-qr" data-tipo="QR">
+      <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.8"/><rect x="14" y="3" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.8"/><rect x="3" y="14" width="7" height="7" rx="1" stroke="currentColor" stroke-width="1.8"/><path d="M14 14h3v3h-3zM20 14v3M14 20h3M20 20v.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      QR
+    </button>
+  </div>
+
+  <label class="field">
+    Monto recibido
+    <input type="number" id="pagoRecibido" min="0" step="0.01" placeholder="0.00">
+  </label>
+
+  <div class="checkout-summary">
+    <div class="row"><span>Cambio a entregar</span><strong id="pagoCambio">—</strong></div>
+  </div>
+
+  <p id="pagoAviso" class="scan-error" hidden>Ingresa un monto recibido igual o mayor al total para poder guardar la venta.</p>
+
+  <button id="guardarBtn" class="primary-btn" disabled>Guardar venta</button>
+</section>
+
+<!-- ------- Confirmación ------- -->
+<section id="doneView" class="view" hidden>
+  <div class="done-box">
+    <div class="done-check"><svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4.5 4.5L19 8" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+    <h2>Venta registrada</h2>
+    <p id="doneDetalle" class="hint"></p>
+  </div>
+  <button id="scanAnotherBtn" class="primary-btn">Escanear otro pedido</button>
+</section>
+
+<!-- ------- Pendientes por sincronizar ------- -->
+<section id="pendingView" class="view" hidden>
+  <div class="view-header">
+    <button class="back-btn" data-back="scanView">← volver</button>
+  </div>
+  <h2>Pendientes por sincronizar</h2>
+  <p class="hint">Estas ventas se guardaron en este dispositivo porque no había conexión. Se reintentan solas al recuperar internet.</p>
+  <div id="pendingList" class="cart-items"></div>
+  <button id="retryPendingBtn" class="primary-btn">Reintentar ahora</button>
+</section>
+
+<canvas id="hiddenCanvas" hidden></canvas>
+<div id="toast" class="toast" hidden></div>
+
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js"></script>
+<script>
+/* =========================================================
+   A TUM Ti - Registrar Ventas (lector de QR)
+   =========================================================
+   CONFIGURA AQUI la misma URL de Apps Script usada en la app
+   de toma de pedidos (debe terminar en /exec). Esta app usa
+   la ruta doPost del mismo Code.gs para guardar en Pedido/Venta.
+   ========================================================= */
+const API_URL = 'https://script.google.com/macros/s/AKfycbzc3KC1UiY-b99aZzDAJ4Ut9gDvxCamc_EjrNoHIr6-N4ejscAaGYsAmyxcQGImWY9w/exec';
+
+const LS_PENDIENTES = 'atumti_ventas_pendientes';
+
+// Misma clave que usa index.html (toma de pedidos) para cachear el catálogo.
+// Si este dispositivo alguna vez abrió esa app conectado a internet, el
+// catálogo ya está disponible aquí de inmediato, incluso sin conexión.
+const LS_PRODUCTOS = 'atumti_productos_cache';
+
+/* Hora de apertura del negocio (formato 24h). Solo se aceptan pedidos
+   escaneados que fueron generados HOY, desde esta hora en adelante.
+   Esto evita registrar pedidos antiguos con precios/productos que ya
+   cambiaron de un día para otro. */
+const HORA_APERTURA = 8; // 8:00 a.m.
+
+let currentPedido = null;   // JSON leído del QR
+let tipoPagoSeleccionado = 'Efectivo'; // 'Efectivo' o 'QR'
+let stream = null;          // MediaStream de la cámara
+let scanning = false;
+let scanLoopId = null;
+
+let productosCatalogo = []; // catálogo para poder agregar productos olvidados
+let pedidoEditado = false;  // true si el registrador tocó cantidades/productos tras leer el QR
+
+// Escáner de código de barras dentro del modal "agregar producto olvidado"
+let modalCodeReader = null;   // instancia de ZXing.BrowserMultiFormatReader (se crea una sola vez)
+let modalScanControls = null; // controles activos para poder detener la cámara
+let modalScanning = false;
+let lastBarcode = null;       // evita agregar el mismo producto varias veces por el mismo frame
+let lastBarcodeAt = 0;
+
+/* ---------------- Utilidades ---------------- */
+
+function money(n) {
+  n = Number(n) || 0;
+  return 'Bs ' + (Math.round(n * 100) / 100).toFixed(2).replace(/\.00$/, '');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.hidden = false;
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(() => { t.hidden = true; }, 2600);
+}
+
+function showView(id) {
+  document.querySelectorAll('.view').forEach((v) => (v.hidden = true));
+  document.getElementById(id).hidden = false;
+  window.scrollTo(0, 0);
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str == null ? '' : String(str);
+  return div.innerHTML;
+}
+
+function setStatus() {
+  const pill = document.getElementById('statusPill');
+  if (navigator.onLine) {
+    pill.className = 'status-pill status-online';
+    pill.textContent = 'en línea';
+  } else {
+    pill.className = 'status-pill status-offline';
+    pill.textContent = 'sin conexión';
+  }
+}
+
+/* ---------------- Escaneo: pestañas ---------------- */
+
+function setScanTab(mode) {
+  document.getElementById('tabCamera').classList.toggle('active', mode === 'camera');
+  document.getElementById('tabUpload').classList.toggle('active', mode === 'upload');
+  document.getElementById('cameraPane').hidden = mode !== 'camera';
+  document.getElementById('uploadPane').hidden = mode !== 'upload';
+  if (mode !== 'camera') stopCamera();
+  document.getElementById('scanError').hidden = true;
+}
+
+/* ---------------- Escaneo: cámara ---------------- */
+
+async function startCamera() {
+  document.getElementById('scanError').hidden = true;
+  const video = document.getElementById('video');
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment' }
+    });
+    video.srcObject = stream;
+    await video.play();
+    document.getElementById('startCameraBtn').hidden = true;
+    document.getElementById('stopCameraBtn').hidden = false;
+    document.getElementById('cameraHint').textContent = 'Apunta al código QR del pedido.';
+    scanning = true;
+    scanLoop();
+  } catch (err) {
+    document.getElementById('cameraHint').textContent =
+      'No se pudo acceder a la cámara. Puedes usar "Subir captura" en su lugar.';
+  }
+}
+
+function stopCamera() {
+  scanning = false;
+  if (scanLoopId) cancelAnimationFrame(scanLoopId);
+  if (stream) {
+    stream.getTracks().forEach((t) => t.stop());
+    stream = null;
+  }
+  document.getElementById('startCameraBtn').hidden = false;
+  document.getElementById('stopCameraBtn').hidden = true;
+}
+
+function scanLoop() {
+  if (!scanning) return;
+  const video = document.getElementById('video');
+  const canvas = document.getElementById('hiddenCanvas');
+
+  if (video.readyState === video.HAVE_ENOUGH_DATA) {
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const code = jsQR(imageData.data, imageData.width, imageData.height);
+    if (code && code.data) {
+      stopCamera();
+      handleScannedText(code.data);
+      return;
+    }
+  }
+  scanLoopId = requestAnimationFrame(scanLoop);
+}
+
+/* ---------------- Escaneo: subir captura ---------------- */
+
+function handleFileUpload(file) {
+  document.getElementById('scanError').hidden = true;
+  const img = new Image();
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    img.onload = () => {
+      const canvas = document.getElementById('hiddenCanvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const code = jsQR(imageData.data, imageData.width, imageData.height);
+      if (code && code.data) {
+        handleScannedText(code.data);
+      } else {
+        showScanError('No se encontró ningún código QR en esa imagen. Intenta con otra captura.');
+      }
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function showScanError(msg) {
+  const el = document.getElementById('scanError');
+  el.textContent = msg;
+  el.hidden = false;
+}
+
+/* ---------------- Catálogo (para agregar productos olvidados) ---------------- */
+
+// Carga el catálogo igual que la app de toma de pedidos: primero desde el
+// caché local (para que "agregar producto" funcione incluso sin internet),
+// y de fondo intenta refrescarlo si hay conexión. No bloquea el escaneo.
+function cargarCatalogoCaja() {
+  try {
+    const cache = localStorage.getItem(LS_PRODUCTOS);
+    if (cache) {
+      const parsed = JSON.parse(cache);
+      productosCatalogo = Array.isArray(parsed.productos) ? parsed.productos : [];
+    }
+  } catch (e) { /* caché corrupto, se ignora */ }
+
+  if (!API_URL || API_URL.includes('PEGA_AQUI')) return;
+
+  fetch(API_URL, { cache: 'no-store' })
+    .then((res) => res.json())
+    .then((data) => {
+      // Igual que en index.html: si el servidor responde sin productos,
+      // no pisamos un caché bueno que ya teníamos.
+      if (data.ok && Array.isArray(data.productos) && data.productos.length) {
+        productosCatalogo = data.productos;
+        localStorage.setItem(LS_PRODUCTOS, JSON.stringify({
+          productos: data.productos,
+          categorias: Array.isArray(data.categorias) ? data.categorias : [],
+          actualizado: data.actualizado || new Date().toISOString()
+        }));
+      }
+    })
+    .catch(() => { /* sin conexión: seguimos con lo que había en caché */ });
+}
+
+/* ---------------- Interpretar el QR ---------------- */
+
+// Intenta leer la fecha/hora del pedido en los formatos más comunes:
+// "AAAA-MM-DD" o "DD/MM/AAAA" para la fecha, y "HH:MM" (24h o con AM/PM) para la hora.
+function parseFechaHoraPedido(fechaStr, horaStr) {
+  if (!fechaStr) return null;
+  fechaStr = String(fechaStr).trim();
+
+  let anio, mes, dia;
+  let m = fechaStr.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/); // AAAA-MM-DD
+  if (m) {
+    anio = +m[1]; mes = +m[2]; dia = +m[3];
+  } else {
+    m = fechaStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/); // DD/MM/AAAA
+    if (m) {
+      dia = +m[1]; mes = +m[2]; anio = +m[3];
+    }
+  }
+  if (!anio) return null;
+
+  let horas = 0, minutos = 0, segundos = 0;
+  if (horaStr) {
+    // Normaliza espacios especiales (los que usa el navegador entre hora y "a./p. m.")
+    const horaNorm = String(horaStr).trim().replace(/[\u202f\u00a0]/g, ' ').toLowerCase();
+    const hm = horaNorm.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+    if (hm) {
+      horas = +hm[1];
+      minutos = +hm[2];
+      segundos = hm[3] ? +hm[3] : 0;
+      // Detecta "a. m." / "am" / "a.m." y "p. m." / "pm" / "p.m." (con o sin puntos/espacios)
+      const esPM = /p\.?\s*m\.?/.test(horaNorm);
+      const esAM = /a\.?\s*m\.?/.test(horaNorm);
+      if (esPM && horas < 12) horas += 12;
+      if (esAM && horas === 12) horas = 0;
+    }
+  }
+
+  const fecha = new Date(anio, mes - 1, dia, horas, minutos, segundos);
+  return isNaN(fecha.getTime()) ? null : fecha;
+}
+
+function esMismoDia(a, b) {
+  return a.getFullYear() === b.getFullYear() &&
+         a.getMonth() === b.getMonth() &&
+         a.getDate() === b.getDate();
+}
+
+// Verifica que el pedido leído del QR sea de HOY y de después de la hora
+// de apertura. Si no cumple, se rechaza para evitar registrar ventas con
+// precios/productos que ya cambiaron de un día para otro.
+function validarVigenciaPedido(data) {
+  const fechaPedido = parseFechaHoraPedido(data.Ven_Fecha, data.Ven_Hora);
+  if (!fechaPedido) {
+    return { ok: false, motivo: 'No se pudo leer la fecha/hora de este pedido. Por seguridad, no se aceptará.' };
+  }
+
+  const ahora = new Date();
+  if (!esMismoDia(fechaPedido, ahora)) {
+    return {
+      ok: false,
+      motivo: 'Este pedido no es de hoy. Por seguridad, solo se aceptan pedidos generados el mismo día, ya que los precios o productos pudieron cambiar.'
+    };
+  }
+
+  const minutosPedido = fechaPedido.getHours() * 60 + fechaPedido.getMinutes();
+  if (minutosPedido < HORA_APERTURA * 60) {
+    return {
+      ok: false,
+      motivo: `Este pedido se generó antes de las ${String(HORA_APERTURA).padStart(2, '0')}:00 a.m. (antes de abrir). Por seguridad, no se aceptará.`
+    };
+  }
+
+  return { ok: true };
+}
+
+function handleScannedText(text) {
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch (e) {
+    showScanError('Este código QR no contiene un pedido válido de A TUM Ti.');
+    return;
+  }
+  if (!data || data.tipo !== 'PEDIDO_ATUMTI' || !Array.isArray(data.items)) {
+    showScanError('Este código QR no corresponde a un pedido de A TUM Ti.');
+    return;
+  }
+
+  const vigencia = validarVigenciaPedido(data);
+  if (!vigencia.ok) {
+    showScanError(vigencia.motivo);
+    return;
+  }
+
+  currentPedido = data;
+  renderReview();
+  showView('reviewView');
+}
+
+/* ---------------- Revisión del pedido ---------------- */
+
+function renderReview() {
+  const p = currentPedido;
+  document.getElementById('revPedidoId').textContent = p.Ped_Id || '—';
+  document.getElementById('revFecha').textContent = `${p.Ven_Fecha || ''} ${p.Ven_Hora || ''}`.trim() || '—';
+  document.getElementById('revCliente').textContent = p.Ven_Cliente || 'Cliente sin registrar';
+  document.getElementById('revCelular').textContent = p.Ven_Celular || '—';
+
+  const nitRow = document.getElementById('revNitRow');
+  if (p.Ven_Nit) {
+    document.getElementById('revNit').textContent = p.Ven_Nit;
+    nitRow.hidden = false;
+  } else {
+    nitRow.hidden = true;
+  }
+
+  const wrap = document.getElementById('revItems');
+  wrap.innerHTML = '';
+
+  if (!p.items.length) {
+    wrap.innerHTML = '<p class="review-empty">El pedido se quedó sin productos. Agrega al menos uno para poder cobrar.</p>';
+  } else {
+    p.items.forEach((it, idx) => {
+      const row = document.createElement('div');
+      row.className = 'rev-item-row';
+      row.innerHTML = `
+        <div class="rev-item-info">
+          <span class="ti-name">${escapeHtml(it.RPedPro_Descripcion)}</span>
+          <span class="ti-amount">${money(it.Ped_Total)}</span>
+        </div>
+        <div class="qty-stepper">
+          <button type="button" class="qty-btn" data-action="minus" data-idx="${idx}" aria-label="Restar uno">−</button>
+          <span class="qty-val">${it.Ped_Cantidad}</span>
+          <button type="button" class="qty-btn" data-action="plus" data-idx="${idx}" aria-label="Sumar uno">+</button>
+        </div>
+        <button type="button" class="ti-remove" data-idx="${idx}" aria-label="Quitar producto">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m-8 0 1 12a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1l1-12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      `;
+      wrap.appendChild(row);
+    });
+  }
+
+  document.getElementById('revTotal').textContent = money(p.Ven_Total);
+  document.getElementById('goPagoBtn').disabled = p.items.length === 0;
+  document.getElementById('revEditedNote').hidden = !pedidoEditado;
+}
+
+/* ---------------- Edición del pedido en caja ---------------- */
+
+// Redondea igual que el resto de la app (evita arrastrar errores de coma flotante).
+function round2(n) {
+  return Math.round((Number(n) || 0) * 100) / 100;
+}
+
+function recalcularTotales() {
+  currentPedido.Ven_Total = round2(
+    currentPedido.items.reduce((sum, it) => sum + (Number(it.Ped_Total) || 0), 0)
+  );
+}
+
+function cambiarCantidadItem(idx, delta) {
+  const it = currentPedido.items[idx];
+  if (!it) return;
+  const nuevaCantidad = it.Ped_Cantidad + delta;
+  if (nuevaCantidad <= 0) {
+    currentPedido.items.splice(idx, 1);
+  } else {
+    it.Ped_Cantidad = nuevaCantidad;
+    it.Ped_Total = round2(it.RPedPro_Precio * it.Ped_Cantidad);
+  }
+  pedidoEditado = true;
+  recalcularTotales();
+  renderReview();
+}
+
+function quitarItem(idx) {
+  currentPedido.items.splice(idx, 1);
+  pedidoEditado = true;
+  recalcularTotales();
+  renderReview();
+}
+
+function agregarProductoAlPedido(prod) {
+  const precio = Number(prod.Pro_Precio) || 0;
+  const existente = currentPedido.items.find((it) => it.RPedPro_Id === prod.Pro_Id);
+  if (existente) {
+    existente.Ped_Cantidad += 1;
+    existente.Ped_Total = round2(existente.RPedPro_Precio * existente.Ped_Cantidad);
+  } else {
+    currentPedido.items.push({
+      RPedPro_Id: prod.Pro_Id,
+      RPedPro_Descripcion: prod.Pro_Descripcion,
+      RPedPro_Precio: precio,
+      Ped_Cantidad: 1,
+      Ped_Total: precio
+    });
+  }
+  pedidoEditado = true;
+  recalcularTotales();
+  renderReview();
+  showToast(`${prod.Pro_Descripcion} añadido al pedido`);
+}
+
+/* ---------------- Modal: agregar producto olvidado ---------------- */
+
+function abrirModalAgregarProducto() {
+  document.getElementById('addProductSearch').value = '';
+  document.getElementById('modalScanError').hidden = true;
+  renderAddProductList('');
+  document.getElementById('addProductModal').hidden = false;
+  document.getElementById('addProductSearch').focus();
+}
+
+function cerrarModalAgregarProducto() {
+  stopModalScan();
+  document.getElementById('addProductModal').hidden = true;
+}
+
+/* ---------------- Modal: escaneo de código de barras ---------------- */
+// Usa ZXing (a diferencia de jsQR, lee códigos de barras 1D como EAN-13,
+// UPC y CODE-128, además de QR) para identificar el producto por su
+// Pro_CodigoBarra y agregarlo directo al pedido, igual que al tocar "+".
+
+function setModalScanBtnState(active) {
+  const btn = document.getElementById('modalScanToggleBtn');
+  btn.classList.toggle('active', active);
+  btn.innerHTML = active
+    ? '<svg viewBox="0 0 24 24" fill="none" width="15" height="15"><rect x="5" y="5" width="14" height="14" rx="2" fill="currentColor"/></svg> Detener escaneo'
+    : '<svg viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="2" height="14" fill="currentColor"/><rect x="6.5" y="5" width="1" height="14" fill="currentColor"/><rect x="9" y="5" width="3" height="14" fill="currentColor"/><rect x="14" y="5" width="1" height="14" fill="currentColor"/><rect x="16.5" y="5" width="2" height="14" fill="currentColor"/><rect x="20" y="5" width="1" height="14" fill="currentColor"/></svg> Escanear código de barras';
+}
+
+async function toggleModalScan() {
+  if (modalScanning) stopModalScan();
+  else await startModalScan();
+}
+
+async function startModalScan() {
+  document.getElementById('modalScanError').hidden = true;
+
+  if (!window.ZXing) {
+    showModalScanError('El lector de código de barras no cargó. Revisa tu conexión e intenta de nuevo.');
+    return;
+  }
+
+  const video = document.getElementById('modalVideo');
+  document.getElementById('modalCameraPane').hidden = false;
+  modalScanning = true;
+  setModalScanBtnState(true);
+
+  try {
+    if (!modalCodeReader) {
+      const hints = new Map();
+      // Limitamos a formatos típicos de producto: más rápido y evita
+      // confundir un QR de otro tipo con un código de barras válido.
+      hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [
+        ZXing.BarcodeFormat.EAN_13,
+        ZXing.BarcodeFormat.EAN_8,
+        ZXing.BarcodeFormat.UPC_A,
+        ZXing.BarcodeFormat.UPC_E,
+        ZXing.BarcodeFormat.CODE_128,
+        ZXing.BarcodeFormat.CODE_39,
+        ZXing.BarcodeFormat.ITF
+      ]);
+      modalCodeReader = new ZXing.BrowserMultiFormatReader(hints);
+    }
+
+    modalScanControls = await modalCodeReader.decodeFromConstraints(
+      { video: { facingMode: 'environment' } },
+      video,
+      (result) => {
+        if (result) handleBarcodeResult(result.getText());
+      }
+    );
+  } catch (err) {
+    showModalScanError('No se pudo acceder a la cámara. Verifica los permisos del navegador.');
+    stopModalScan();
+  }
+}
+
+function stopModalScan() {
+  modalScanning = false;
+  if (modalScanControls) {
+    try { modalScanControls.stop(); } catch (e) { /* ya estaba detenido */ }
+    modalScanControls = null;
+  }
+  document.getElementById('modalCameraPane').hidden = true;
+  setModalScanBtnState(false);
+}
+
+function handleBarcodeResult(codigo) {
+  const texto = String(codigo || '').trim();
+  if (!texto) return;
+
+  // Evita agregar el mismo producto muchas veces mientras el código
+  // sigue frente a la cámara (la librería decodifica varias veces por segundo).
+  const ahora = Date.now();
+  if (texto === lastBarcode && ahora - lastBarcodeAt < 1800) return;
+  lastBarcode = texto;
+  lastBarcodeAt = ahora;
+
+  const prod = productosCatalogo.find((p) => String(p.Pro_CodigoBarra || '').trim() === texto);
+  if (prod) {
+    document.getElementById('modalScanError').hidden = true;
+    agregarProductoAlPedido(prod);
+    if (navigator.vibrate) navigator.vibrate(70);
+  } else {
+    showModalScanError(`Código "${texto}" no coincide con ningún producto del catálogo.`);
+  }
+}
+
+function showModalScanError(msg) {
+  const el = document.getElementById('modalScanError');
+  el.textContent = msg;
+  el.hidden = false;
+}
+
+function renderAddProductList(query) {
+  const wrap = document.getElementById('addProductList');
+  wrap.innerHTML = '';
+
+  if (!productosCatalogo.length) {
+    wrap.innerHTML = '<p class="modal-empty">No hay catálogo disponible en este dispositivo todavía.<br>Conéctalo una vez a internet para descargarlo.</p>';
+    return;
+  }
+
+  const q = query.trim().toLowerCase();
+
+  // El catálogo ya está cacheado en este dispositivo (no hace falta mostrarlo
+  // completo como lista). Solo se muestran resultados cuando el registrador
+  // escribe algo a buscar; para agregar directo, basta con escanear el código.
+  if (!q) {
+    wrap.innerHTML = '<p class="modal-empty">Escanea el código de barras del producto, o escribe para buscarlo por nombre.</p>';
+    return;
+  }
+
+  const lista = productosCatalogo.filter((p) =>
+    String(p.Pro_Descripcion || '').toLowerCase().includes(q) ||
+    String(p.Pro_CodigoBarra || '').toLowerCase().includes(q)
+  );
+
+  if (!lista.length) {
+    wrap.innerHTML = '<p class="modal-empty">Sin resultados para esa búsqueda.</p>';
+    return;
+  }
+
+  lista.forEach((prod) => {
+    const row = document.createElement('div');
+    row.className = 'modal-product-row';
+    row.innerHTML = `
+      <div>
+        <div class="mp-name">${escapeHtml(prod.Pro_Descripcion)}</div>
+        <div class="mp-price">${money(prod.Pro_Precio)}</div>
+      </div>
+      <button type="button" class="mp-add" data-id="${escapeHtml(prod.Pro_Id)}" aria-label="Añadir">+</button>
+    `;
+    wrap.appendChild(row);
+  });
+}
+
+/* ---------------- Cobro ---------------- */
+
+function goPago() {
+  const p = currentPedido;
+  document.getElementById('pagoTotal').textContent = money(p.Ven_Total);
+  const recibidoInput = document.getElementById('pagoRecibido');
+  recibidoInput.value = p.Ven_Recibido != null ? p.Ven_Recibido : '';
+  setTipoPago('Efectivo');
+  updateCambio();
+  showView('pagoView');
+}
+
+function setTipoPago(tipo) {
+  tipoPagoSeleccionado = tipo;
+  document.getElementById('tabEfectivo').classList.toggle('active', tipo === 'Efectivo');
+  document.getElementById('tabQr').classList.toggle('active', tipo === 'QR');
+
+  const recibidoInput = document.getElementById('pagoRecibido');
+  if (tipo === 'QR' && currentPedido) {
+    // El pago por QR siempre es el monto exacto: no hay vuelto que entregar.
+    recibidoInput.value = currentPedido.Ven_Total;
+    recibidoInput.disabled = true;
+  } else {
+    recibidoInput.disabled = false;
+  }
+  updateCambio();
+}
+
+function updateCambio() {
+  const total = Number(currentPedido.Ven_Total) || 0;
+  const recibido = parseFloat(document.getElementById('pagoRecibido').value);
+  const cambioEl = document.getElementById('pagoCambio');
+  const btn = document.getElementById('guardarBtn');
+  const aviso = document.getElementById('pagoAviso');
+
+  if (tipoPagoSeleccionado === 'QR') {
+    // Pago exacto por QR: no aplica vuelto.
+    cambioEl.textContent = 'Sin vuelto (pago exacto)';
+    btn.disabled = false;
+    aviso.hidden = true;
+    return;
+  }
+
+  if (isNaN(recibido)) {
+    cambioEl.textContent = '—';
+    btn.disabled = true;
+    aviso.hidden = true;
+    return;
+  }
+
+  const cambio = recibido - total;
+  cambioEl.textContent = money(cambio);
+
+  if (recibido < total) {
+    btn.disabled = true;
+    aviso.hidden = false;
+  } else {
+    btn.disabled = false;
+    aviso.hidden = true;
+  }
+}
+
+/* ---------------- Guardar venta ---------------- */
+
+function buildPayloadFinal() {
+  const p = currentPedido;
+  const recibido = parseFloat(document.getElementById('pagoRecibido').value);
+  const total = Number(p.Ven_Total) || 0;
+  return {
+    Ped_Id: p.Ped_Id,
+    Ven_Fecha: p.Ven_Fecha,
+    Ven_Hora: p.Ven_Hora,
+    Ven_Cliente: p.Ven_Cliente || '',
+    Ven_Celular: p.Ven_Celular || '',
+    Ven_Nit: p.Ven_Nit || '',
+    Ven_Total: total,
+    Ven_Recibido: recibido,
+    Ven_Cambio: Math.round((recibido - total) * 100) / 100,
+    Ven_TipoPago: tipoPagoSeleccionado,
+    Ven_Estado: 'FINALIZADO',
+    Ven_EditadoEnCaja: pedidoEditado,
+    items: p.items,
+    registrado: new Date().toISOString()
+  };
+}
+
+async function guardarVenta() {
+  const payload = buildPayloadFinal();
+  const btn = document.getElementById('guardarBtn');
+  btn.disabled = true;
+  btn.textContent = 'Guardando…';
+
+  const ok = await enviarAlSheet(payload);
+
+  btn.textContent = 'Guardar venta';
+
+  if (ok) {
+    mostrarConfirmacion(payload, false);
+  } else {
+    encolarPendiente(payload);
+    mostrarConfirmacion(payload, true);
+  }
+}
+
+async function enviarAlSheet(payload) {
+  if (!API_URL || API_URL.includes('PEGA_AQUI')) return false;
+  try {
+    const res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // evita preflight CORS
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    return !!data.ok;
+  } catch (err) {
+    return false;
+  }
+}
+
+function mostrarConfirmacion(payload, offline) {
+  const detalle = document.getElementById('doneDetalle');
+  const pago = payload.Ven_TipoPago ? ` (${payload.Ven_TipoPago})` : '';
+  if (offline) {
+    detalle.textContent =
+      `Pedido ${payload.Ped_Id} guardado en este dispositivo. Sin conexión ahora mismo: ` +
+      `se enviará solo al Sheet en cuanto vuelva el internet.`;
+  } else {
+    detalle.textContent = `Pedido ${payload.Ped_Id} · ${money(payload.Ven_Total)}${pago} registrado correctamente en tu Sheet.`;
+  }
+  showView('doneView');
+}
+
+/* ---------------- Cola de pendientes (offline) ---------------- */
+
+function loadPendientes() {
+  try { return JSON.parse(localStorage.getItem(LS_PENDIENTES)) || []; }
+  catch (e) { return []; }
+}
+
+function savePendientes(list) {
+  localStorage.setItem(LS_PENDIENTES, JSON.stringify(list));
+  renderPendingBadge();
+}
+
+function encolarPendiente(payload) {
+  const list = loadPendientes();
+  list.push(payload);
+  savePendientes(list);
+}
+
+function renderPendingBadge() {
+  const list = loadPendientes();
+  const btn = document.getElementById('pendingBtn');
+  document.getElementById('pendingCount').textContent = list.length;
+  btn.hidden = list.length === 0;
+}
+
+function renderPendingList() {
+  const list = loadPendientes();
+  const wrap = document.getElementById('pendingList');
+  wrap.innerHTML = '';
+  if (list.length === 0) {
+    wrap.innerHTML = '<p class="hint">No hay ventas pendientes por sincronizar.</p>';
+    return;
+  }
+  list.forEach((p) => {
+    const row = document.createElement('div');
+    row.className = 'pending-item';
+    row.innerHTML = `
+      <span class="p-id">${escapeHtml(p.Ped_Id)}</span>
+      <span>${escapeHtml(p.Ven_Cliente || 'Sin nombre')}</span>
+      <span>${money(p.Ven_Total)}</span>
+    `;
+    wrap.appendChild(row);
+  });
+}
+
+async function reintentarPendientes() {
+  const list = loadPendientes();
+  if (list.length === 0) { showToast('No hay pendientes.'); return; }
+
+  const restantes = [];
+  let enviados = 0;
+  for (const payload of list) {
+    const ok = await enviarAlSheet(payload);
+    if (ok) enviados++;
+    else restantes.push(payload);
+  }
+  savePendientes(restantes);
+  renderPendingList();
+  if (enviados > 0) showToast(`${enviados} venta(s) sincronizada(s).`);
+  if (restantes.length > 0) showToast(`${restantes.length} sigue(n) pendiente(s).`);
+}
+
+/* ---------------- Arranque ---------------- */
+
+function resetToScan() {
+  currentPedido = null;
+  pedidoEditado = false;
+  document.getElementById('scanError').hidden = true;
+  document.getElementById('fileInput').value = '';
+  showView('scanView');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  setStatus();
+  renderPendingBadge();
+  cargarCatalogoCaja();
+
+  document.querySelectorAll('.scan-tab').forEach((btn) => {
+    btn.addEventListener('click', () => setScanTab(btn.dataset.mode));
+  });
+
+  // Editar cantidades / quitar producto directo en la lista del pedido
+  document.getElementById('revItems').addEventListener('click', (ev) => {
+    const minus = ev.target.closest('[data-action="minus"]');
+    const plus = ev.target.closest('[data-action="plus"]');
+    const remove = ev.target.closest('.ti-remove');
+    if (minus) cambiarCantidadItem(Number(minus.dataset.idx), -1);
+    else if (plus) cambiarCantidadItem(Number(plus.dataset.idx), 1);
+    else if (remove) {
+      if (confirm('¿Quitar este producto del pedido?')) quitarItem(Number(remove.dataset.idx));
+    }
+  });
+
+  // Modal de agregar producto olvidado
+  document.getElementById('addProductBtn').addEventListener('click', abrirModalAgregarProducto);
+  document.getElementById('addProductCloseBtn').addEventListener('click', cerrarModalAgregarProducto);
+  document.getElementById('addProductModal').addEventListener('click', (ev) => {
+    if (ev.target.id === 'addProductModal') cerrarModalAgregarProducto();
+  });
+  document.getElementById('addProductSearch').addEventListener('input', (ev) => {
+    renderAddProductList(ev.target.value);
+  });
+  document.getElementById('modalScanToggleBtn').addEventListener('click', toggleModalScan);
+  document.getElementById('addProductList').addEventListener('click', (ev) => {
+    const btn = ev.target.closest('.mp-add');
+    if (!btn) return;
+    const prod = productosCatalogo.find((p) => p.Pro_Id === btn.dataset.id);
+    if (prod) agregarProductoAlPedido(prod);
+  });
+
+  document.getElementById('startCameraBtn').addEventListener('click', startCamera);
+  document.getElementById('stopCameraBtn').addEventListener('click', stopCamera);
+
+  document.getElementById('fileInput').addEventListener('change', (e) => {
+    if (e.target.files[0]) handleFileUpload(e.target.files[0]);
+  });
+
+  document.querySelectorAll('[data-back]').forEach((btn) => {
+    btn.addEventListener('click', () => showView(btn.dataset.back));
+  });
+
+  document.getElementById('goPagoBtn').addEventListener('click', goPago);
+  document.getElementById('tabEfectivo').addEventListener('click', () => setTipoPago('Efectivo'));
+  document.getElementById('tabQr').addEventListener('click', () => setTipoPago('QR'));
+  document.getElementById('pagoRecibido').addEventListener('input', updateCambio);
+  document.getElementById('guardarBtn').addEventListener('click', guardarVenta);
+  document.getElementById('scanAnotherBtn').addEventListener('click', resetToScan);
+
+  document.getElementById('pendingBtn').addEventListener('click', () => {
+    renderPendingList();
+    showView('pendingView');
+  });
+  document.getElementById('retryPendingBtn').addEventListener('click', reintentarPendientes);
+
+  window.addEventListener('online', () => { setStatus(); reintentarPendientes(); cargarCatalogoCaja(); });
+  window.addEventListener('offline', setStatus);
+});
+</script>
+</body>
+</html>
