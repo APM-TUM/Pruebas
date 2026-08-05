@@ -578,13 +578,14 @@
   .primary-btn:active{ transform: scale(.97); }
   .primary-btn:disabled{ opacity:.35; box-shadow:none; }
 
-  /* ---------- QR SCREEN ---------- */
+  /* ---------- QR SCREEN (estilo recibo/comprobante) ---------- */
   .qr-screen{
-    background: var(--bg);
+    background: #F1F3F7;
     opacity:0; transform: translateY(10px);
     transition: opacity .35s ease, transform .35s ease;
   }
   .qr-screen.active{ opacity:1; transform:none; }
+  .qr-screen .brand{ color:#11182B; }
 
   .icon-nav-btn{
     width:44px; height:44px; border-radius:14px;
@@ -594,6 +595,7 @@
     flex-shrink:0;
     transition: transform .12s ease;
   }
+  .qr-screen .icon-nav-btn{ background:#11182B; border-color:#11182B; color:#fff; }
   .icon-nav-btn svg{ width:20px; height:20px; }
   .icon-nav-btn:active{ transform: scale(.9); }
 
@@ -601,135 +603,84 @@
     flex:1;
     min-height:0;
     overflow-y:auto;
+    display:flex;
+    justify-content:center;
     padding: 4px 20px 20px;
   }
 
   .ticket-card{
-    position:relative;
-    overflow:hidden;
-    background: var(--surface);
-    border: 1px solid var(--line);
-    border-radius: var(--radius-lg);
-    padding: 28px 22px 24px;
-    display:flex; flex-direction:column; align-items:center;
-    text-align:center;
-  }
-  .ticket-card::before{
-    content:'';
-    position:absolute; top:-90px; left:50%; transform:translateX(-50%);
-    width:260px; height:200px;
-    background: radial-gradient(ellipse, rgba(51,209,122,.16), transparent 72%);
-    pointer-events:none;
-  }
-  .ticket-eyebrow{
+    width:100%;
+    max-width:340px;
+    background:#ffffff;
+    border-radius:14px;
+    border:1px solid #E3E6EB;
+    border-top:3px solid #1E3A5F;
+    box-shadow: 0 10px 30px rgba(17,24,39,.10);
+    padding:22px 20px 20px;
     font-family: var(--font-mono);
-    font-size: 11px;
-    letter-spacing: .16em;
-    text-transform: uppercase;
-    color: var(--amber);
-    margin: 0 0 16px;
+    color:#1A202C;
   }
-  .qr-success-badge{
-    width:58px; height:58px; border-radius:50%;
-    background: linear-gradient(160deg, var(--ok), #1c9c5b);
-    color:#04240f;
-    display:flex; align-items:center; justify-content:center;
-    box-shadow: 0 16px 30px -12px rgba(51,209,122,.6);
-    margin-bottom:14px;
-    animation: qrPop .5s cubic-bezier(.34,1.56,.64,1);
+  .ticket-head{
+    display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+    margin-bottom:4px;
   }
-  .qr-success-badge svg{ width:28px; height:28px; }
-  @keyframes qrPop{ 0%{ transform:scale(.4); opacity:0; } 100%{ transform:scale(1); opacity:1; } }
-  .ticket-title{
-    font-family: var(--font-display); font-weight:700; font-size:21px;
-    margin:0 0 4px; letter-spacing:-.01em;
+  .ticket-head .brand-mark{
+    font-family: var(--font-mono);
+    font-weight:700; font-size:18px; color:#1E3A5F; line-height:1;
   }
-  .ticket-card .t-sub{
-    font-family: var(--font-mono); font-size:11.5px;
-    color: var(--text-muted); letter-spacing:.04em;
-    margin-bottom:20px;
-  }
-  .ticket-items{
-    width:100%;
-    display:flex; flex-direction:column; gap:8px;
-    text-align:left;
-  }
-  .ticket-items .ti-row{
-    display:flex; align-items:center; gap:10px;
-    background: var(--bg-soft);
-    border: 1px solid var(--line);
-    border-radius: 14px;
-    padding: 11px 12px;
-  }
-  .ticket-items .ti-dot{
-    width:8px; height:8px; border-radius:50%;
-    background: var(--ok); flex-shrink:0;
-  }
-  .ticket-items .ti-name{
-    flex:1; min-width:0;
-    font-size:14px; font-weight:500;
-    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
-  }
-  .ticket-items .ti-check{
-    width:22px; height:22px; border-radius:50%;
-    background: var(--ok); color:#04240f;
-    display:flex; align-items:center; justify-content:center;
-    flex-shrink:0;
-  }
-  .ticket-items .ti-check svg{ width:12px; height:12px; }
-  .ticket-total-pill{
-    width:100%;
-    display:flex; align-items:center; gap:10px;
-    background: var(--amber-soft);
-    border: 1px solid rgba(255,178,56,.35);
-    border-radius: 16px;
-    padding: 13px 16px;
-    margin: 14px 0 20px;
-  }
-  .ticket-total-pill svg{ width:20px; height:20px; color: var(--amber); flex-shrink:0; }
-  .ticket-total-pill span{ flex:1; font-size:13px; color: var(--text-muted); text-align:left; }
-  .ticket-total-pill strong{
-    font-family: var(--font-display); font-weight:700; font-size:20px;
-    color: var(--amber);
-  }
-  .qr-frame{
-    position:relative;
-    padding:20px;
+  .ticket-head strong{ font-size:15px; color:#111827; }
+  .ticket-head small{
+    display:block; width:100%;
+    color:#697386; font-size:11px;
+    text-transform:uppercase; letter-spacing:.06em;
     margin-top:2px;
   }
-  .qr-frame::before{
-    content:'';
-    position:absolute; inset:8px;
-    border-radius:22px;
-    background: radial-gradient(circle, var(--amber-soft), transparent 70%);
-    filter: blur(1px);
-    z-index:0;
+  .ticket-meta{
+    margin-top:12px; font-size:12px; color:#697386;
+    display:flex; flex-direction:column; gap:3px;
   }
-  .qr-frame-corner{
-    position:absolute; width:26px; height:26px;
-    border-color: var(--amber);
-    z-index:2;
-  }
-  .qr-frame-corner.tl{ top:0; left:0; border-top:3px solid; border-left:3px solid; border-top-left-radius:10px; }
-  .qr-frame-corner.tr{ top:0; right:0; border-top:3px solid; border-right:3px solid; border-top-right-radius:10px; }
-  .qr-frame-corner.bl{ bottom:0; left:0; border-bottom:3px solid; border-left:3px solid; border-bottom-left-radius:10px; }
-  .qr-frame-corner.br{ bottom:0; right:0; border-bottom:3px solid; border-right:3px solid; border-bottom-right-radius:10px; }
-  .qr-holder{
-    position:relative; z-index:1;
-    padding:16px;
-    background:#fff;
-    border-radius:18px;
-    line-height:0;
-    box-shadow: 0 20px 44px -18px rgba(0,0,0,.55);
-  }
-  .qr-holder svg{ width:190px; height:190px; }
-  .ticket-hint{
-    margin: 16px 0 0;
+  .ticket-meta div{ display:flex; justify-content:space-between; gap:10px; }
+  .ticket-meta span:last-child{ color:#1A202C; text-align:right; }
+
+  .ticket-divider{ border-top:1px dashed #D8DCE3; margin:14px 0; }
+
+  .ticket-items{
+    display:grid;
+    grid-template-columns: 1fr auto auto;
+    column-gap:10px; row-gap:6px;
     font-size:12.5px;
-    color: var(--text-muted);
-    display:flex; align-items:center; justify-content:center; gap:6px;
+    align-items:baseline;
   }
-  .ticket-hint svg{ width:14px; height:14px; color: var(--amber); flex-shrink:0; }
+  .ticket-items .ti-name{
+    color:#1A202C; overflow:hidden; text-overflow:ellipsis;
+    white-space:nowrap; min-width:0;
+  }
+  .ticket-items .ti-qty{ color:#697386; text-align:right; }
+  .ticket-items .ti-amount{ color:#1A202C; font-weight:700; text-align:right; }
+
+  .ticket-total-row{
+    display:flex; justify-content:space-between;
+    font-size:16px; font-weight:700; color:#111827;
+  }
+
+  .qr-holder{
+    text-align:center;
+    padding:10px 0 0;
+    line-height:0;
+    font-size:0;
+  }
+  .qr-holder svg{
+    display:inline-block;
+    width:190px; height:190px;
+    max-width:100%; height:auto;
+    border-radius:6px;
+  }
+  .ticket-hint{
+    text-align:center;
+    margin: 8px 0 0;
+    font-size:11px;
+    color:#697386;
+  }
 
   .qr-actions{
     flex-shrink:0;
@@ -1017,8 +968,8 @@
       </div>
 
       <div class="checkout-summary-row">
-        <span>Artículos en tu compra</span>
-        <strong id="checkoutTotal">0</strong>
+        <span>Total del pedido</span>
+        <strong id="checkoutTotal">Bs 0</strong>
       </div>
     </div>
 
@@ -1052,45 +1003,24 @@
 
     <div class="qr-body">
       <div class="ticket-card">
-        <p class="ticket-eyebrow">CreadorQR · Mi Compra</p>
-        <div class="qr-success-badge">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5 5L20 6.5"/></svg>
+        <div class="ticket-head">
+          <span class="brand-mark">&gt;_</span>
+          <strong>CreadorQR</strong>
+          <small>Comprobante de compra</small>
         </div>
-        <h2 class="ticket-title">¡Código generado!</h2>
-        <div id="qrFecha" class="t-sub"></div>
-
-        <div id="qrClienteBox" class="ticket-cliente-box hidden">
-          <div class="tc-row">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
-            <span id="qrClienteNombre"></span>
-          </div>
-          <div id="qrClienteCelularRow" class="tc-row hidden">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.81.3 1.6.54 2.37a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.71-1.11a2 2 0 0 1 2.11-.45c.77.24 1.56.42 2.37.54A2 2 0 0 1 22 16.92z"/></svg>
-            <span id="qrClienteCelular"></span>
-          </div>
-          <div id="qrClienteNitRow" class="tc-row hidden">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><circle cx="8" cy="12" r="2"/><path d="M14 10h6M14 14h4"/></svg>
-            <span id="qrClienteNit"></span>
-          </div>
+        <div class="ticket-meta">
+          <div><span>Pedido</span><span id="qrPedidoId"></span></div>
+          <div><span>Fecha</span><span id="qrFecha"></span></div>
+          <div id="qrClienteBox"><span>Cliente</span><span id="qrClienteNombre"></span></div>
+          <div id="qrClienteNitRow"><span>NIT</span><span id="qrClienteNit"></span></div>
         </div>
-
+        <div class="ticket-divider" aria-hidden="true"></div>
         <div id="qrItems" class="ticket-items"></div>
-
-        <div class="ticket-total-pill">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2l1.5 4M18 2l-1.5 4M3 6h18l-1.5 13a2 2 0 0 1-2 2H6.5a2 2 0 0 1-2-2z"/></svg>
-          <span>Total artículos</span>
-          <strong id="qrTotal">0</strong>
-        </div>
-
-        <div class="qr-frame">
-          <div class="qr-frame-corner tl"></div><div class="qr-frame-corner tr"></div>
-          <div class="qr-frame-corner bl"></div><div class="qr-frame-corner br"></div>
-          <div id="qrHolder" class="qr-holder"></div>
-        </div>
-        <p class="ticket-hint">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-          Muestra este código QR para registrar tu compra
-        </p>
+        <div class="ticket-divider" aria-hidden="true"></div>
+        <div class="ticket-total-row"><span>TOTAL</span><strong id="qrTotal">Bs 0</strong></div>
+        <div class="ticket-divider" aria-hidden="true"></div>
+        <div id="qrHolder" class="qr-holder"></div>
+        <p class="ticket-hint">Muestra este código QR para registrar tu compra</p>
       </div>
     </div>
 
@@ -2820,10 +2750,9 @@ var qrcode = function() {
   var editQrBtn = document.getElementById('editQrBtn');
   var newQrBtn = document.getElementById('newQrBtn');
 
+  var qrPedidoId = document.getElementById('qrPedidoId');
   var qrClienteBox = document.getElementById('qrClienteBox');
   var qrClienteNombre = document.getElementById('qrClienteNombre');
-  var qrClienteCelularRow = document.getElementById('qrClienteCelularRow');
-  var qrClienteCelular = document.getElementById('qrClienteCelular');
   var qrClienteNitRow = document.getElementById('qrClienteNitRow');
   var qrClienteNit = document.getElementById('qrClienteNit');
 
@@ -3204,7 +3133,7 @@ var qrcode = function() {
       feedback('dup', p.Pro_Descripcion + ' ya está en tu carrito');
       return;
     }
-    cart.push({ id: p.Pro_Id, code: p.Pro_CodigoBarra, name: p.Pro_Descripcion });
+    cart.push({ id: p.Pro_Id, code: p.Pro_CodigoBarra, name: p.Pro_Descripcion, price: Number(p.Pro_Precio) || 0 });
     renderCart();
     bumpBadge();
     feedback(true, p.Pro_Descripcion + ' añadido');
@@ -3300,81 +3229,104 @@ var qrcode = function() {
   trashBtn.addEventListener('click', clearCart);
 
   // ---------- Generar QR ----------
+  var MAX_ITEMS_QR = 15;
+
   function randomId(){
+    // Mismo formato hex de 8 caracteres que Pro_Id / Ped_Id
     try{
       return [].slice.call(crypto.getRandomValues(new Uint8Array(4)))
         .map(function(b){ return b.toString(16).padStart(2,'0'); }).join('');
     }catch(e){ return String(Date.now()); }
   }
 
-  function fechaLegible(d){
-    try{ return d.toLocaleString('es-BO', { dateStyle:'medium', timeStyle:'short' }); }
-    catch(e){ return d.toString(); }
+  function money(n){
+    return 'Bs ' + (Math.round(n * 100) / 100).toFixed(2).replace(/\.00$/, '');
+  }
+
+  function cartTotal(){
+    var total = 0;
+    for (var i=0; i<cart.length; i++){ total += cart[i].price || 0; }
+    return total;
   }
 
   function generarQR(){
     if (cart.length === 0) return;
 
+    if (cart.length > MAX_ITEMS_QR){
+      feedback(false, 'Máximo ' + MAX_ITEMS_QR + ' productos distintos por pedido');
+      return;
+    }
+
     var ahora = new Date();
     var cliente = clienteInput.value.trim();
     var celular = celularInput.value.trim();
     var nit = nitInput.value.trim();
+    var total = cartTotal();
+
+    var items = cart.map(function(it){
+      return {
+        RPedPro_Id: it.id,
+        RPedPro_Descripcion: it.name || it.code,
+        RPedPro_Precio: it.price || 0,
+        Ped_Cantidad: 1,
+        Ped_Total: it.price || 0
+      };
+    });
 
     var payload = {
-      tipo: 'MI_COMPRA',
+      tipo: 'PEDIDO_ATUMTI',
       version: 1,
-      id: randomId(),
       generado: ahora.toISOString(),
-      cliente: cliente,
-      celular: celular,
-      nit: nit,
-      items: cart.map(function(it){
-        return { code: it.code, name: it.name };
-      }),
-      totalArticulos: totalQty()
+      Ped_Id: randomId(),
+      Ven_Fecha: ahora.toLocaleDateString('es-BO'),
+      Ven_Hora: ahora.toLocaleTimeString('es-BO'),
+      Ven_Cliente: cliente,
+      Ven_Celular: celular,
+      Ven_Nit: nit,
+      Ven_Total: total,
+      Ven_Estado: 'PRESUPUESTO',
+      items: items
     };
     ultimaCompra = payload;
 
-    renderTicket(payload, ahora);
+    renderTicket(payload);
     closeSheet();
     checkoutScreen.classList.remove('active');
     setTimeout(function(){ checkoutScreen.classList.add('hidden'); }, 200);
     goToQrScreen();
   }
 
-  function renderTicket(payload, ahora){
-    qrFecha.textContent = fechaLegible(ahora || new Date(payload.generado));
+  function renderTicket(payload){
+    qrPedidoId.textContent = payload.Ped_Id;
+    qrFecha.textContent = payload.Ven_Fecha + ' ' + payload.Ven_Hora;
+    qrClienteNombre.textContent = payload.Ven_Cliente || 'Cliente sin registrar';
 
-    if (payload.cliente){
-      qrClienteBox.classList.remove('hidden');
-      qrClienteNombre.textContent = payload.cliente;
-      if (payload.celular){
-        qrClienteCelularRow.classList.remove('hidden');
-        qrClienteCelular.textContent = payload.celular;
-      } else {
-        qrClienteCelularRow.classList.add('hidden');
-      }
-      if (payload.nit){
-        qrClienteNitRow.classList.remove('hidden');
-        qrClienteNit.textContent = payload.nit;
-      } else {
-        qrClienteNitRow.classList.add('hidden');
-      }
+    if (payload.Ven_Nit){
+      qrClienteNitRow.classList.remove('hidden');
+      qrClienteNit.textContent = payload.Ven_Nit;
     } else {
-      qrClienteBox.classList.add('hidden');
+      qrClienteNitRow.classList.add('hidden');
     }
 
     qrItemsEl.innerHTML = '';
     payload.items.forEach(function(it){
-      var row = document.createElement('div');
-      row.className = 'ti-row';
-      row.innerHTML =
-        '<span class="ti-dot"></span>' +
-        '<span class="ti-name">' + escapeHtml(it.name || it.code) + '</span>' +
-        '<span class="ti-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5 5L20 6.5"/></svg></span>';
-      qrItemsEl.appendChild(row);
+      var nameEl = document.createElement('span');
+      nameEl.className = 'ti-name';
+      nameEl.textContent = it.RPedPro_Descripcion;
+
+      var qtyEl = document.createElement('span');
+      qtyEl.className = 'ti-qty';
+      qtyEl.textContent = 'x' + it.Ped_Cantidad;
+
+      var amtEl = document.createElement('span');
+      amtEl.className = 'ti-amount';
+      amtEl.textContent = money(it.Ped_Total);
+
+      qrItemsEl.appendChild(nameEl);
+      qrItemsEl.appendChild(qtyEl);
+      qrItemsEl.appendChild(amtEl);
     });
-    qrTotalEl.textContent = String(payload.totalArticulos);
+    qrTotalEl.textContent = money(payload.Ven_Total);
 
     qrHolder.innerHTML = '';
     try{
@@ -3407,7 +3359,7 @@ var qrcode = function() {
   function goToCheckoutScreen(){
     pauseCamera();
     closeSheet();
-    checkoutTotalEl.textContent = String(totalQty());
+    checkoutTotalEl.textContent = money(cartTotal());
     scanner.classList.add('hidden');
     checkoutScreen.classList.remove('hidden');
     requestAnimationFrame(function(){ checkoutScreen.classList.add('active'); });
@@ -3460,289 +3412,182 @@ var qrcode = function() {
     volverAEscanear();
   });
 
-  // ---------- Guardar imagen del QR (dibujada en canvas) ----------
-  // La imagen exportada usa el mismo lenguaje visual que la app: header
-  // oscuro con la marca, badge de éxito, tarjetas/chips redondeadas y el
-  // QR enmarcado con las mismas esquinas de mira que el visor de cámara.
-  function wrapText(ctx, text, maxWidth){
-    var words = String(text).split(' ');
-    var lines = [];
-    var current = '';
-    words.forEach(function(w){
-      var test = current ? current + ' ' + w : w;
-      if (ctx.measureText(test).width > maxWidth && current){
-        lines.push(current);
-        current = w;
-      } else {
-        current = test;
-      }
-    });
-    if (current) lines.push(current);
-    return lines;
-  }
-
-  function roundRectPath(ctx, x, y, w, h, r){
-    ctx.beginPath();
-    ctx.moveTo(x + r, y);
-    ctx.lineTo(x + w - r, y);
-    ctx.arcTo(x + w, y, x + w, y + r, r);
-    ctx.lineTo(x + w, y + h - r);
-    ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
-    ctx.lineTo(x + r, y + h);
-    ctx.arcTo(x, y + h, x, y + h - r, r);
-    ctx.lineTo(x, y + r);
-    ctx.arcTo(x, y, x + r, y, r);
-    ctx.closePath();
-  }
-
-  // Pequeños íconos de línea, dibujados dentro de un cuadro size x size
-  // con esquina superior izquierda en (x, y). Mismo espíritu que los
-  // SVG de la interfaz, simplificados para verse bien a tamaño chico.
-  function drawIcon(ctx, type, x, y, size, color){
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.strokeStyle = color;
-    ctx.fillStyle = color;
-    ctx.lineWidth = Math.max(1.3, size * 0.11);
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    var s = size;
-    function rr(rx, ry, rw, rh, rrad){ roundRectPath(ctx, rx, ry, rw, rh, rrad); }
-    if (type === 'user'){
-      ctx.beginPath(); ctx.arc(s*0.5, s*0.32, s*0.19, 0, Math.PI*2); ctx.stroke();
-      ctx.beginPath(); ctx.arc(s*0.5, s*1.08, s*0.42, Math.PI, 0); ctx.stroke();
-    } else if (type === 'phone'){
-      rr(s*0.24, s*0.05, s*0.52, s*0.9, s*0.13); ctx.stroke();
-      ctx.beginPath(); ctx.arc(s*0.5, s*0.78, s*0.045, 0, Math.PI*2); ctx.fill();
-    } else if (type === 'id'){
-      rr(s*0.04, s*0.2, s*0.92, s*0.6, s*0.11); ctx.stroke();
-      ctx.beginPath(); ctx.arc(s*0.27, s*0.5, s*0.115, 0, Math.PI*2); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(s*0.55, s*0.4); ctx.lineTo(s*0.84, s*0.4); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(s*0.55, s*0.6); ctx.lineTo(s*0.74, s*0.6); ctx.stroke();
-    } else if (type === 'bag'){
-      ctx.beginPath(); ctx.moveTo(s*0.26, s*0.08); ctx.lineTo(s*0.36, s*0.32); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(s*0.74, s*0.08); ctx.lineTo(s*0.64, s*0.32); ctx.stroke();
-      rr(s*0.1, s*0.28, s*0.8, s*0.64, s*0.09); ctx.stroke();
-    } else if (type === 'camera'){
-      ctx.beginPath(); ctx.moveTo(s*0.3, s*0.26); ctx.lineTo(s*0.4, s*0.08); ctx.lineTo(s*0.6, s*0.08); ctx.lineTo(s*0.7, s*0.26); ctx.stroke();
-      rr(s*0.03, s*0.26, s*0.94, s*0.64, s*0.13); ctx.stroke();
-      ctx.beginPath(); ctx.arc(s*0.5, s*0.6, s*0.19, 0, Math.PI*2); ctx.stroke();
-    }
-    ctx.restore();
-  }
-
-  function drawCheckMark(ctx, cx, cy, r, strokeColor){
-    ctx.save();
-    ctx.strokeStyle = strokeColor;
-    ctx.lineWidth = Math.max(1.6, r * 0.28);
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
-    ctx.beginPath();
-    ctx.moveTo(cx - r*0.5, cy + r*0.02);
-    ctx.lineTo(cx - r*0.12, cy + r*0.42);
-    ctx.lineTo(cx + r*0.55, cy - r*0.36);
-    ctx.stroke();
-    ctx.restore();
-  }
-
+  // La imagen exportada se dibuja directo en un <canvas> (texto, líneas y
+  // el QR módulo por módulo) replicando el mismo recibo que se ve en
+  // pantalla, en vez de "fotografiar" el HTML. El QR se pinta pixel por
+  // pixel sin antialiasing para que quede 100% legible por el lector.
   function generarTicketBlob(){
     return (async function(){
       if (!ultimaCompra) return null;
       try{
-        // Espera a que las fuentes de marca (Space Grotesk / Inter / IBM
-        // Plex Mono), ya solicitadas por la página, estén listas para que
-        // el canvas las use tal cual se ven en la app.
-        try{ if (document.fonts && document.fonts.ready) await document.fonts.ready; }catch(e){}
-
         var payload = ultimaCompra;
 
-        // Colores tomados directo de las variables CSS de la app, para
-        // que la imagen exportada siempre combine con la identidad visual.
-        var rootCss = getComputedStyle(document.documentElement);
-        function cssVar(name, fallback){
-          var v = rootCss.getPropertyValue(name);
-          return (v && v.trim()) ? v.trim() : fallback;
-        }
-        var cBg    = cssVar('--bg', '#0B0F19');
-        var cAmber = cssVar('--amber', '#FFB238');
-        var cOk    = cssVar('--ok', '#33D17A');
-        var cInk       = '#141A2C';
-        var cMute      = '#7B8296';
-        var cChip       = '#F4F6FB';
-        var cAmberSoft       = 'rgba(255,178,56,.16)';
-        var cAmberSoftBorder = 'rgba(255,178,56,.5)';
-        var cAmberInk        = '#B36B00';
-
-        var fontDisplay = 'Space Grotesk, sans-serif';
-        var fontBody    = 'Inter, sans-serif';
-        var fontMono    = '"IBM Plex Mono", monospace';
-
-        var scale = 3;
-        var width = 360;
-        var padding = 24;
-        var contentW = width - padding * 2;
-        var cardRadius = 28;
+        var scale = 2;
+        var width = 340;
+        var padding = 22;
+        var maxHeight = 1400; // lienzo de sobra; se recorta al final
 
         var canvas = document.createElement('canvas');
         canvas.width = width * scale;
-        canvas.height = 1800 * scale; // alto generoso, se recorta al final
+        canvas.height = maxHeight * scale;
         var ctx = canvas.getContext('2d');
         ctx.scale(scale, scale);
-
-        // Fondo blanco base (cuerpo de la tarjeta)
         ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, width, 1800);
+        ctx.fillRect(0, 0, width, maxHeight);
 
-        // ---------- Header oscuro con la marca ----------
-        var headerH = 116;
-        ctx.fillStyle = cBg;
-        ctx.fillRect(0, 0, width, headerH);
+        var colInk = '#111827';
+        var colAccent = '#1E3A5F';
+        var colText = '#1A202C';
+        var colMute = '#697386';
+        var colLine = '#C9CFD6';
 
-        ctx.font = '700 18px ' + fontDisplay;
-        var brandText = 'CreadorQR';
-        var brandTextW = ctx.measureText(brandText).width;
-        var dotR = 4;
-        var brandGroupW = dotR * 2 + 8 + brandTextW;
-        var brandStartX = (width - brandGroupW) / 2;
-        var brandY = 46;
-        ctx.fillStyle = cAmber;
-        ctx.beginPath(); ctx.arc(brandStartX + dotR, brandY - 5, dotR, 0, Math.PI*2); ctx.fill();
-        ctx.textAlign = 'left';
-        ctx.fillStyle = '#F4F6FB';
-        ctx.fillText(brandText, brandStartX + dotR * 2 + 8, brandY);
+        var y = padding;
 
-        ctx.textAlign = 'center';
-        ctx.font = '11px ' + fontMono;
-        ctx.fillStyle = 'rgba(244,246,251,.6)';
-        ctx.fillText(fechaLegible(new Date(payload.generado)), width / 2, brandY + 26);
-
-        var y = headerH;
-
-        // ---------- Badge de éxito, a caballo entre header y cuerpo ----------
-        var badgeR = 29;
-        var badgeCY = headerH;
-        var grad = ctx.createLinearGradient(width/2, badgeCY - badgeR, width/2, badgeCY + badgeR);
-        grad.addColorStop(0, cOk);
-        grad.addColorStop(1, '#1c9c5b');
-        ctx.beginPath();
-        ctx.arc(width/2, badgeCY, badgeR, 0, Math.PI*2);
-        ctx.fillStyle = grad;
-        ctx.fill();
-        ctx.lineWidth = 4;
-        ctx.strokeStyle = '#ffffff';
-        ctx.stroke();
-        drawCheckMark(ctx, width/2, badgeCY, badgeR, '#04240f');
-
-        y = badgeCY + badgeR + 26;
-
-        // ---------- Título ----------
-        ctx.textAlign = 'center';
-        ctx.font = '700 20px ' + fontDisplay;
-        ctx.fillStyle = cInk;
-        ctx.fillText('¡Código generado!', width / 2, y);
-        y += 34;
-
-        // ---------- Datos del cliente ----------
-        if (payload.cliente){
-          var camposCliente = [{ icon:'user', text: payload.cliente }];
-          if (payload.celular) camposCliente.push({ icon:'phone', text: payload.celular });
-          if (payload.nit) camposCliente.push({ icon:'id', text: payload.nit });
-
-          var rowH = 25;
-          var boxPadV = 14, boxPadH = 16;
-          var boxH = boxPadV * 2 + rowH * camposCliente.length - (rowH - 15);
-          roundRectPath(ctx, padding, y, contentW, boxH, 16);
-          ctx.fillStyle = cChip;
-          ctx.fill();
-
-          var rowY = y + boxPadV + 12;
-          ctx.textAlign = 'left';
-          ctx.font = '600 13.5px ' + fontBody;
-          camposCliente.forEach(function(campo){
-            drawIcon(ctx, campo.icon, padding + boxPadH, rowY - 12, 17, cAmber);
-            ctx.fillStyle = cInk;
-            ctx.fillText(campo.text, padding + boxPadH + 26, rowY + 1);
-            rowY += rowH;
-          });
-
-          y += boxH + 18;
+        function divider(){
+          y += 6;
+          ctx.strokeStyle = colLine;
+          ctx.setLineDash([3, 3]);
+          ctx.beginPath();
+          ctx.moveTo(padding, y);
+          ctx.lineTo(width - padding, y);
+          ctx.stroke();
+          ctx.setLineDash([]);
+          y += 14;
         }
 
-        // ---------- Lista de productos (chips) ----------
-        ctx.textAlign = 'left';
-        var maxTextW = contentW - 34 - 34;
-        payload.items.forEach(function(it){
-          ctx.font = '600 13px ' + fontBody;
-          var label = (it.name || it.code);
-          var lines = wrapText(ctx, label, maxTextW);
-          var chipPadV = 12;
-          var lineH = 17;
-          var chipH = Math.max(38, chipPadV * 2 + lines.length * lineH - (lineH - 13));
-
-          roundRectPath(ctx, padding, y, contentW, chipH, 14);
-          ctx.fillStyle = cChip;
-          ctx.fill();
-
-          var chipCY = y + chipH / 2;
-          ctx.beginPath();
-          ctx.arc(padding + 18, chipCY, 4, 0, Math.PI*2);
-          ctx.fillStyle = cOk;
-          ctx.fill();
-
-          ctx.fillStyle = cInk;
-          ctx.font = '600 13px ' + fontBody;
-          var firstLineY = chipCY - ((lines.length - 1) * lineH) / 2 + 4;
-          lines.forEach(function(line, i){
-            ctx.fillText(line, padding + 34, firstLineY + i * lineH);
+        function wrapLines(text, maxWidth){
+          var words = String(text).split(' ');
+          var lines = [];
+          var line = '';
+          words.forEach(function(w){
+            var test = line ? line + ' ' + w : w;
+            if (ctx.measureText(test).width > maxWidth && line){
+              lines.push(line);
+              line = w;
+            } else {
+              line = test;
+            }
           });
+          if (line) lines.push(line);
+          return lines;
+        }
 
-          var checkCX = padding + contentW - 22;
-          ctx.beginPath();
-          ctx.arc(checkCX, chipCY, 11, 0, Math.PI*2);
-          ctx.fillStyle = cOk;
-          ctx.fill();
-          drawCheckMark(ctx, checkCX, chipCY, 11, '#04240f');
+        function truncate(text, maxWidth){
+          var t = String(text == null ? '' : text);
+          if (ctx.measureText(t).width <= maxWidth) return t;
+          while (t.length > 1 && ctx.measureText(t + '…').width > maxWidth){
+            t = t.slice(0, -1);
+          }
+          return t + '…';
+        }
 
-          y += chipH + 8;
+        /* ---- encabezado ---- */
+        ctx.textAlign = 'left';
+        ctx.fillStyle = colAccent;
+        ctx.font = '700 17px monospace';
+        ctx.fillText('>_', padding, y + 13);
+        var markWidth = ctx.measureText('>_ ').width;
+        ctx.fillStyle = colInk;
+        ctx.font = '700 15px monospace';
+        ctx.fillText('CreadorQR', padding + markWidth, y + 13);
+        y += 22;
+        ctx.fillStyle = colMute;
+        ctx.font = '700 10px monospace';
+        ctx.fillText('COMPROBANTE DE COMPRA', padding, y + 9);
+        y += 20;
+
+        divider();
+
+        /* ---- metadatos ---- */
+        ctx.font = '12px monospace';
+        function metaRow(label, value){
+          ctx.fillStyle = colMute;
+          ctx.textAlign = 'left';
+          ctx.fillText(label, padding, y + 9);
+          var labelWidth = ctx.measureText(label).width;
+          var valMax = width - padding * 2 - labelWidth - 10;
+          ctx.fillStyle = colText;
+          ctx.textAlign = 'right';
+          ctx.fillText(truncate(value, valMax), width - padding, y + 9);
+          ctx.textAlign = 'left';
+          y += 17;
+        }
+        metaRow('Pedido', payload.Ped_Id);
+        metaRow('Fecha', payload.Ven_Fecha + ' ' + payload.Ven_Hora);
+        metaRow('Cliente', payload.Ven_Cliente || 'Cliente sin registrar');
+        if (payload.Ven_Nit) metaRow('NIT', payload.Ven_Nit);
+
+        divider();
+
+        /* ---- items ---- */
+        ctx.font = '12.5px monospace';
+        var itemsList = payload.items || [];
+
+        var qtyColWidth = 0;
+        var amtColWidth = 0;
+        itemsList.forEach(function(it){
+          qtyColWidth = Math.max(qtyColWidth, ctx.measureText('x' + it.Ped_Cantidad).width);
+          amtColWidth = Math.max(amtColWidth, ctx.measureText(money(it.Ped_Total)).width);
+        });
+        var amtColRight = width - padding;
+        var qtyColRight = amtColRight - amtColWidth - 14;
+        var nameMax = width - padding * 2 - amtColWidth - qtyColWidth - 28;
+
+        itemsList.forEach(function(it){
+          ctx.textAlign = 'right';
+          ctx.fillStyle = colText;
+          ctx.fillText(money(it.Ped_Total), amtColRight, y + 9);
+
+          ctx.fillStyle = colMute;
+          ctx.fillText('x' + it.Ped_Cantidad, qtyColRight, y + 9);
+
+          ctx.textAlign = 'left';
+          ctx.fillStyle = colText;
+          ctx.fillText(truncate(it.RPedPro_Descripcion, nameMax), padding, y + 9);
+
+          y += 18;
         });
 
-        y += 8;
+        divider();
 
-        // ---------- Píldora de total de artículos ----------
-        var pillH = 52;
-        roundRectPath(ctx, padding, y, contentW, pillH, 16);
-        ctx.fillStyle = cAmberSoft;
-        ctx.fill();
-        ctx.lineWidth = 1;
-        ctx.strokeStyle = cAmberSoftBorder;
-        roundRectPath(ctx, padding + 0.5, y + 0.5, contentW - 1, pillH - 1, 15.5);
-        ctx.stroke();
-
-        drawIcon(ctx, 'bag', padding + 16, y + pillH/2 - 9, 18, cAmber);
+        /* ---- total ---- */
+        ctx.font = '700 15px monospace';
+        ctx.fillStyle = colInk;
         ctx.textAlign = 'left';
-        ctx.font = '500 13px ' + fontBody;
-        ctx.fillStyle = '#8a6a2e';
-        ctx.fillText('Total artículos', padding + 16 + 26, y + pillH/2 + 5);
-
+        ctx.fillText('TOTAL', padding, y + 11);
         ctx.textAlign = 'right';
-        ctx.font = '700 21px ' + fontDisplay;
-        ctx.fillStyle = cAmberInk;
-        ctx.fillText(String(payload.totalArticulos), padding + contentW - 16, y + pillH/2 + 7);
+        ctx.fillText(money(payload.Ven_Total), width - padding, y + 11);
+        ctx.textAlign = 'left';
+        y += 26;
 
-        y += pillH + 28;
+        divider();
 
-        // ---------- QR enmarcado, con esquinas de mira como la cámara ----------
+        /* ---- QR (dibujado módulo por módulo, sin depender de SVG) ---- */
         var qr = qrcode(0, 'M');
         qr.addData(JSON.stringify(payload));
         qr.make();
         var moduleCount = qr.getModuleCount();
-        var quietModules = 2;
-        var maxQrArea = contentW - 40;
-        var cellPx = Math.max(3, Math.min(6, Math.floor(maxQrArea / (moduleCount + quietModules * 2))));
 
+        // Margen de silencio: todo lector de QR necesita un borde blanco
+        // alrededor del patrón para poder detectarlo (mínimo 4 módulos).
+        // Se calcula aparte del padding del ticket porque con compras
+        // grandes el QR tiene más módulos y ese padding fijo no alcanza.
+        var quietModules = 4;
+        var availableWidth = width - padding * 2;
+        var totalModules = moduleCount + quietModules * 2;
+
+        // El QR se dibuja en un canvas aparte, módulo por módulo, en
+        // píxeles ENTEROS y sin suavizado. Si se dibujara con coordenadas
+        // fraccionadas el navegador aplicaría antialiasing y los bordes
+        // entre módulos se difuminarían — con compras de varios productos
+        // (QR más denso, módulos más chicos) eso corrompe bits y el QR
+        // deja de ser legible para lectores estrictos, aunque a simple
+        // vista se vea bien.
+        var availableDevicePx = Math.floor(availableWidth * scale);
+        var cellPx = Math.max(4, Math.floor(availableDevicePx / totalModules));
         var qrPixelCanvas = document.createElement('canvas');
-        qrPixelCanvas.width = (moduleCount + quietModules * 2) * cellPx;
-        qrPixelCanvas.height = qrPixelCanvas.width;
+        qrPixelCanvas.width = cellPx * totalModules;
+        qrPixelCanvas.height = cellPx * totalModules;
         var qctx = qrPixelCanvas.getContext('2d');
         qctx.imageSmoothingEnabled = false;
         qctx.fillStyle = '#ffffff';
@@ -3751,71 +3596,53 @@ var qrcode = function() {
         for (var r = 0; r < moduleCount; r++){
           for (var c = 0; c < moduleCount; c++){
             if (qr.isDark(r, c)){
-              qctx.fillRect((c + quietModules) * cellPx, (r + quietModules) * cellPx, cellPx, cellPx);
+              qctx.fillRect(
+                (c + quietModules) * cellPx,
+                (r + quietModules) * cellPx,
+                cellPx,
+                cellPx
+              );
             }
           }
         }
 
-        var qrSize = qrPixelCanvas.width / scale;
-        var frameSize = qrSize + 40;
-        var frameX = (width - frameSize) / 2;
+        var qrSize = qrPixelCanvas.width / scale; // vuelve a unidades del ticket
+        var qrX = padding + (availableWidth - qrSize) / 2;
+        var qrY = y;
 
-        ctx.save();
-        ctx.shadowColor = 'rgba(255,178,56,.45)';
-        ctx.shadowBlur = 22;
-        ctx.shadowOffsetY = 10;
-        roundRectPath(ctx, frameX, y, frameSize, frameSize, 20);
-        ctx.fillStyle = '#ffffff';
-        ctx.fill();
-        ctx.restore();
-
-        var qrX = frameX + (frameSize - qrSize) / 2;
-        var qrY = y + (frameSize - qrSize) / 2;
         ctx.imageSmoothingEnabled = false;
         ctx.drawImage(qrPixelCanvas, qrX, qrY, qrSize, qrSize);
         ctx.imageSmoothingEnabled = true;
+        y += qrSize + 16;
 
-        // esquinas tipo mira, igual que el visor de la cámara
-        ctx.strokeStyle = cAmber;
-        ctx.lineWidth = 3;
-        ctx.lineCap = 'round';
-        var cl = 20, off = 6;
-        var fx = frameX - off, fy = y - off, fx2 = frameX + frameSize + off, fy2 = y + frameSize + off;
-        ctx.beginPath(); ctx.moveTo(fx, fy + cl); ctx.lineTo(fx, fy); ctx.lineTo(fx + cl, fy); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(fx2 - cl, fy); ctx.lineTo(fx2, fy); ctx.lineTo(fx2, fy + cl); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(fx, fy2 - cl); ctx.lineTo(fx, fy2); ctx.lineTo(fx + cl, fy2); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(fx2 - cl, fy2); ctx.lineTo(fx2, fy2); ctx.lineTo(fx2, fy2 - cl); ctx.stroke();
-
-        y += frameSize + 26;
-
-        // ---------- Pie con ícono ----------
-        drawIcon(ctx, 'camera', width/2 - 8, y, 16, cAmber);
-        y += 24;
+        /* ---- pie ---- */
+        ctx.font = '11px monospace';
+        ctx.fillStyle = colMute;
         ctx.textAlign = 'center';
-        ctx.font = '12px ' + fontBody;
-        ctx.fillStyle = cMute;
-        var hintLines = wrapText(ctx, 'Muestra este código QR para registrar tu compra', contentW);
+        var hintLines = wrapLines('Muestra este código QR para registrar tu compra', width - padding * 2);
         hintLines.forEach(function(line){
-          ctx.fillText(line, width / 2, y);
-          y += 16;
+          ctx.fillText(line, width / 2, y + 9);
+          y += 15;
         });
-        y += padding - 6;
+        ctx.textAlign = 'left';
+        y += padding - 10;
 
-        // ---------- Recorte final con esquinas redondeadas ----------
+        /* recorte final a la altura realmente usada */
         var finalHeight = Math.ceil(y);
         var finalCanvas = document.createElement('canvas');
         finalCanvas.width = width * scale;
         finalCanvas.height = finalHeight * scale;
         var fctx = finalCanvas.getContext('2d');
-        fctx.save();
-        roundRectPath(fctx, 0, 0, width * scale, finalHeight * scale, cardRadius * scale);
-        fctx.clip();
-        fctx.drawImage(canvas, 0, 0, width * scale, finalHeight * scale, 0, 0, width * scale, finalHeight * scale);
-        fctx.restore();
+        fctx.drawImage(
+          canvas,
+          0, 0, width * scale, finalHeight * scale,
+          0, 0, width * scale, finalHeight * scale
+        );
 
         return await new Promise(function(resolve){
           finalCanvas.toBlob(function(blob){ resolve(blob); }, 'image/png');
         });
+
       }catch(err){
         return null;
       }
@@ -3825,7 +3652,7 @@ var qrcode = function() {
   var SAVE_QR_LABEL = saveQrBtn.innerHTML;
 
   function nombreArchivoQR(){
-    return 'mi-compra-' + (ultimaCompra ? ultimaCompra.id : Date.now()) + '.png';
+    return 'mi-compra-' + (ultimaCompra ? ultimaCompra.Ped_Id : Date.now()) + '.png';
   }
 
   // Descarga directa al dispositivo. Esta es la acción principal y
