@@ -543,6 +543,12 @@
     font-family: var(--font-mono); font-size:14.5px;
     overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
   }
+  .cart-row .price{
+    flex-shrink:0;
+    font-family: var(--font-mono); font-weight:700; font-size:14px;
+    color: var(--amber);
+    white-space:nowrap;
+  }
   .cart-row .remove-btn{
     width:34px; height:34px; border-radius:10px;
     display:flex; align-items:center; justify-content:center;
@@ -560,8 +566,19 @@
 
   .sheet-footer{
     flex-shrink:0;
-    padding: 10px 20px 4px;
+    padding: 4px 20px 4px;
     border-top: 1px solid var(--line);
+  }
+  .cart-total-row{
+    display:flex; align-items:center; justify-content:space-between;
+    padding: 14px 2px 16px;
+  }
+  .cart-total-row span{
+    font-size:13.5px; color: var(--text-muted);
+  }
+  .cart-total-row strong{
+    font-family: var(--font-display); font-weight:700; font-size:22px;
+    color: var(--amber);
   }
   .primary-btn{
     width:100%;
@@ -948,6 +965,10 @@
     </div>
     <div id="cartList" class="cart-list"></div>
     <div class="sheet-footer">
+      <div class="cart-total-row">
+        <span>Total del pedido</span>
+        <strong id="cartTotalAmount">Bs 0</strong>
+      </div>
       <button id="genQrBtn" class="primary-btn" disabled>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
@@ -2753,6 +2774,7 @@ var qrcode = function() {
   var sheetCount = document.getElementById('sheetCount');
   var trashBtn = document.getElementById('trashBtn');
   var cartList = document.getElementById('cartList');
+  var cartTotalAmount = document.getElementById('cartTotalAmount');
   var genQrBtn = document.getElementById('genQrBtn');
 
   var qrScreen = document.getElementById('qrScreen');
@@ -3181,6 +3203,7 @@ var qrcode = function() {
     gateCountPill.classList.toggle('show', total > 0);
     sheetCount.textContent = '(' + total + ')';
     genQrBtn.disabled = cart.length === 0;
+    cartTotalAmount.textContent = money(cartTotal());
 
     // list
     if (cart.length === 0){
@@ -3202,6 +3225,7 @@ var qrcode = function() {
         '<div class="cart-row" data-id="' + escapeHtml(it.id) + '">' +
           '<span class="dot"></span>' +
           '<span class="code">' + escapeHtml(it.name || it.code) + '</span>' +
+          '<span class="price">' + escapeHtml(money(it.price || 0)) + '</span>' +
           '<button class="remove-btn" aria-label="Quitar" data-remove="' + escapeHtml(it.id) + '">' +
             '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>' +
           '</button>' +
