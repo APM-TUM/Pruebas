@@ -299,8 +299,57 @@
     background: radial-gradient(circle, rgba(51,209,122,.35), transparent 65%);
     opacity:0; z-index:4; pointer-events:none;
   }
+  .flash-ok.fail{
+    background: radial-gradient(circle, rgba(255,90,54,.38), transparent 65%);
+  }
   .flash-ok.play{ animation: flashOk .55s ease-out; }
   @keyframes flashOk{ 0%{ opacity:1; } 100%{ opacity:0; } }
+
+  /* ---------- SCAN TOAST (alerta verde / roja) ---------- */
+  .catalog-status{
+    flex-shrink:0;
+    margin: -10px 20px 14px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing:.02em;
+    color: var(--text-muted);
+    text-align:center;
+    min-height: 14px;
+  }
+  .scan-toast{
+    position:fixed;
+    left:20px; right:20px;
+    top: calc(max(16px, var(--safe-t)) + 66px);
+    z-index:50;
+    display:flex; align-items:center; gap:12px;
+    padding: 14px 16px;
+    border-radius: var(--radius-md);
+    background: var(--surface-raised);
+    border: 1px solid var(--line);
+    box-shadow: 0 20px 50px -18px rgba(0,0,0,.75);
+    transform: translateY(-140%);
+    opacity:0;
+    pointer-events:none;
+    transition: transform .28s cubic-bezier(.2,.9,.3,1), opacity .28s ease;
+  }
+  .scan-toast.show{ transform:none; opacity:1; }
+  .scan-toast .icon{
+    width:26px; height:26px; border-radius:50%;
+    flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    font-family: var(--font-display); font-weight:700; font-size:14px;
+  }
+  .scan-toast .msg{
+    flex:1; min-width:0;
+    font-size:14.5px; font-weight:600;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .scan-toast.ok{ border-color: rgba(51,209,122,.35); }
+  .scan-toast.ok .icon{ background: var(--ok); color:#04240f; }
+  .scan-toast.ok .msg{ color: var(--ok); }
+  .scan-toast.error{ border-color: var(--laser-soft); }
+  .scan-toast.error .icon{ background: var(--laser); color:#2a0700; }
+  .scan-toast.error .msg{ color: var(--laser); }
 
   .cam-fallback{
     position:absolute; inset:0;
@@ -517,6 +566,8 @@
       </button>
     </div>
 
+    <p id="catalogStatus" class="catalog-status"></p>
+
     <div class="stage-wrap">
       <!-- Camera panel -->
       <div id="cameraPanel" class="viewfinder">
@@ -549,6 +600,9 @@
     </div>
   </div>
 
+  <!-- ================= ALERTA VERDE/ROJA ================= -->
+  <div id="scanToast" class="scan-toast"></div>
+
   <!-- ================= CART SHEET ================= -->
   <div id="sheetBackdrop" class="sheet-backdrop"></div>
   <div id="cartSheet" class="cart-sheet">
@@ -571,12 +625,20 @@
 (function(){
   "use strict";
 
+  // ---------- Catálogo de productos (sincronizado y guardado en el dispositivo) ----------
+  // Pega aquí la URL de tu Apps Script (la misma fuente de datos que usa
+  // tu otra app). Debe devolver { ok:true, productos:[ {Pro_Id, Pro_CodigoBarra, Pro_Descripcion, ...}, ... ] }
+  var API_URL = 'https://script.google.com/macros/s/AKfycbzc3KC1UiY-b99aZzDAJ4Ut9gDvxCamc_EjrNoHIr6-N4ejscAaGYsAmyxcQGImWY9w/exec';
+  var LS_PRODUCTOS = 'atumti_productos_cache';
+  var productos = []; // catálogo en memoria: [{Pro_Id, Pro_CodigoBarra, Pro_Descripcion, ...}]
+
   // ---------- State ----------
-  var cart = []; // { code, qty }
+  var cart = []; // { id, code, name, qty }
   var lastScanAt = {}; // code -> timestamp, cooldown to avoid duplicate reads
   var SCAN_COOLDOWN_MS = 1800;
   var html5QrCode = null;
   var cameraStarting = false;
+  var audioCtxScan = null;
 
   // ---------- Elements ----------
   var gate = document.getElementById('gate');
@@ -604,8 +666,104 @@
   var trashBtn = document.getElementById('trashBtn');
   var cartList = document.getElementById('cartList');
 
+  var catalogStatus = document.getElementById('catalogStatus');
+  var scanToast = document.getElementById('scanToast');
+  var scanToastTimer = null;
+
   function vibrate(ms){
     try{ if (navigator.vibrate) navigator.vibrate(ms); }catch(e){}
+  }
+
+  // ---------- Catálogo: cargar de caché local y sincronizar con el servidor ----------
+  function cargarCatalogo(){
+    try{
+      var cache = localStorage.getItem(LS_PRODUCTOS);
+      if (cache){
+        var parsed = JSON.parse(cache);
+        productos = parsed.productos || [];
+        setCatalogStatus('Catálogo guardado en el dispositivo · ' + formatFecha(parsed.actualizado) + ' · ' + productos.length + ' productos');
+      } else {
+        setCatalogStatus('Descargando catálogo…');
+      }
+    }catch(e){ /* caché no disponible o corrupta: se ignora */ }
+
+    if (!API_URL || API_URL.indexOf('PEGA_AQUI') !== -1){
+      if (!productos.length) setCatalogStatus('Catálogo no configurado (falta API_URL)');
+      return;
+    }
+
+    fetch(API_URL, { cache: 'no-store' })
+      .then(function(res){ return res.json(); })
+      .then(function(data){
+        if (data && data.ok && Array.isArray(data.productos)){
+          productos = data.productos;
+          var actualizado = data.actualizado || new Date().toISOString();
+          try{
+            localStorage.setItem(LS_PRODUCTOS, JSON.stringify({ productos: productos, actualizado: actualizado }));
+          }catch(e){ /* almacenamiento no disponible: sigue funcionando solo en memoria */ }
+          setCatalogStatus('Catálogo actualizado · ' + formatFecha(actualizado) + ' · ' + productos.length + ' productos');
+        }
+      })
+      .catch(function(){
+        if (productos.length){
+          setCatalogStatus('Sin conexión — usando catálogo guardado (' + productos.length + ' productos)');
+        } else {
+          setCatalogStatus('Sin conexión y sin catálogo guardado');
+        }
+      });
+  }
+
+  function formatFecha(iso){
+    if (!iso) return '';
+    try{
+      var d = new Date(iso);
+      return d.toLocaleString('es-BO', { dateStyle: 'short', timeStyle: 'short' });
+    }catch(e){ return ''; }
+  }
+
+  function setCatalogStatus(text){
+    catalogStatus.textContent = text;
+  }
+
+  window.addEventListener('online', function(){ cargarCatalogo(); });
+
+  function findProduct(code){
+    for (var i=0; i<productos.length; i++){
+      if (String(productos[i].Pro_CodigoBarra || '').trim() === code) return productos[i];
+    }
+    return null;
+  }
+
+  // ---------- Alerta verde / roja + sonido + vibración ----------
+  function beep(ok){
+    try{
+      if (!audioCtxScan) audioCtxScan = new (window.AudioContext || window.webkitAudioContext)();
+      var ctx = audioCtxScan;
+      var osc = ctx.createOscillator();
+      var gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = ok ? 880 : 220;
+      gain.gain.setValueAtTime(0.16, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.18);
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.start(); osc.stop(ctx.currentTime + 0.18);
+    }catch(e){ /* audio no disponible: seguimos con el flash + vibración */ }
+  }
+
+  function showToast(ok, text){
+    scanToast.className = 'scan-toast show ' + (ok ? 'ok' : 'error');
+    scanToast.innerHTML =
+      '<span class="icon">' + (ok ? '✓' : '✕') + '</span>' +
+      '<span class="msg">' + escapeHtml(text) + '</span>';
+    clearTimeout(scanToastTimer);
+    scanToastTimer = setTimeout(function(){ scanToast.classList.remove('show'); }, 1700);
+  }
+
+  function feedback(ok, text){
+    vibrate(ok ? 35 : [40,40,40]);
+    beep(ok);
+    showToast(ok, text);
+    if (!cameraPanel.classList.contains('hidden')) playFlash(ok);
   }
 
   // ---------- Gate -> Sync -> Scanner ----------
@@ -707,13 +865,12 @@
     lastScanAt[code] = now;
 
     addToCart(code);
-    vibrate(35);
-    playFlash();
   }
 
-  function playFlash(){
-    flashOk.classList.remove('play');
+  function playFlash(ok){
+    flashOk.classList.remove('play', 'fail');
     void flashOk.offsetWidth; // restart animation
+    if (!ok) flashOk.classList.add('fail');
     flashOk.classList.add('play');
   }
 
@@ -730,7 +887,6 @@
     var val = manualInput.value.trim();
     if (!val) return;
     addToCart(val);
-    vibrate(25);
     manualInput.value = '';
     manualSendBtn.disabled = true;
     manualInput.focus();
@@ -738,15 +894,21 @@
 
   // ---------- Cart ----------
   function addToCart(code){
+    var p = findProduct(code);
+    if (!p){
+      feedback(false, 'Código ' + code + ' no encontrado');
+      return;
+    }
     var item = null;
-    for (var i=0; i<cart.length; i++){ if (cart[i].code === code){ item = cart[i]; break; } }
-    if (item){ item.qty += 1; } else { cart.push({ code: code, qty: 1 }); }
+    for (var i=0; i<cart.length; i++){ if (cart[i].id === p.Pro_Id){ item = cart[i]; break; } }
+    if (item){ item.qty += 1; } else { cart.push({ id: p.Pro_Id, code: p.Pro_CodigoBarra, name: p.Pro_Descripcion, qty: 1 }); }
     renderCart();
     bumpBadge();
+    feedback(true, p.Pro_Descripcion + ' añadido');
   }
 
-  function removeFromCart(code){
-    cart = cart.filter(function(it){ return it.code !== code; });
+  function removeFromCart(id){
+    cart = cart.filter(function(it){ return it.id !== id; });
     renderCart();
   }
 
@@ -788,11 +950,11 @@
     for (var i=0; i<cart.length; i++){
       var it = cart[i];
       html +=
-        '<div class="cart-row" data-code="' + escapeHtml(it.code) + '">' +
+        '<div class="cart-row" data-id="' + escapeHtml(it.id) + '">' +
           '<span class="dot"></span>' +
-          '<span class="code">' + escapeHtml(it.code) + '</span>' +
+          '<span class="code">' + escapeHtml(it.name || it.code) + '</span>' +
           '<span class="qty">x' + it.qty + '</span>' +
-          '<button class="remove-btn" aria-label="Quitar" data-remove="' + escapeHtml(it.code) + '">' +
+          '<button class="remove-btn" aria-label="Quitar" data-remove="' + escapeHtml(it.id) + '">' +
             '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>' +
           '</button>' +
         '</div>';
@@ -834,6 +996,7 @@
   trashBtn.addEventListener('click', clearCart);
 
   // ---------- Init ----------
+  cargarCatalogo();
   renderCart();
 })();
 </script>
