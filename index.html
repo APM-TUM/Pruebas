@@ -1576,7 +1576,7 @@
   <!-- ================= QR SCREEN ================= -->
   <div id="qrScreen" class="screen qr-screen hidden">
     <div class="topbar qr-topbar">
-      <button id="qrBackBtn" class="back-icon-btn" aria-label="Volver a editar mi compra">
+      <button id="qrBackBtn" class="back-icon-btn" aria-label="Volver a datos del cliente">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
       </button>
     </div>
@@ -3372,6 +3372,13 @@ var qrcode = function() {
   var nitInput = document.getElementById('nitInput');
 
   var ultimaCompra = null; // último payload generado, para poder editar/guardar
+  // Lo que realmente se codifica DENTRO del QR: un subconjunto mínimo de
+  // ultimaCompra. El Registrador (app 2) ya tiene el catálogo completo
+  // guardado en el dispositivo (mismo caché), así que no hace falta
+  // repetir ahí nombre/precio/subtotal de cada producto — con el ID y la
+  // cantidad le alcanza para armar el resto. Menos datos = QR más simple
+  // = más rápido y confiable de leer, sobre todo con varios productos.
+  var ultimoQrData = null;
 
   var catalogStatus = document.getElementById('catalogStatus');
   var refreshCatBtn = document.getElementById('refreshCatBtn');
@@ -4192,12 +4199,32 @@ var qrcode = function() {
       items: items
     };
     ultimaCompra = payload;
+    ultimoQrData = construirQrData(payload);
 
     renderTicket(payload);
     closeSheet();
     checkoutScreen.classList.remove('active');
     setTimeout(function(){ checkoutScreen.classList.add('hidden'); }, 200);
     goToQrScreen();
+  }
+
+  // Arma el objeto MÍNIMO que se codifica dentro del QR. El ticket en
+  // pantalla y la imagen descargable siguen mostrando nombre/precio/
+  // subtotal completos (vienen de "payload"); esto es solo lo que viaja
+  // dentro del código: por producto, únicamente su ID y la cantidad.
+  function construirQrData(payload){
+    return {
+      tipo: payload.tipo,
+      Ped_Id: payload.Ped_Id,
+      Ven_Fecha: payload.Ven_Fecha,
+      Ven_Hora: payload.Ven_Hora,
+      Ven_Cliente: payload.Ven_Cliente,
+      Ven_Celular: payload.Ven_Celular,
+      Ven_Nit: payload.Ven_Nit,
+      items: payload.items.map(function(it){
+        return { i: it.RPedPro_Id, q: it.Ped_Cantidad };
+      })
+    };
   }
 
   function renderTicket(payload){
@@ -4229,7 +4256,7 @@ var qrcode = function() {
     qrHolder.innerHTML = '';
     try{
       var qr = qrcode(0, 'M');
-      qr.addData(JSON.stringify(payload));
+      qr.addData(JSON.stringify(ultimoQrData));
       qr.make();
       qrHolder.innerHTML = qr.createSvgTag({ cellSize: 4, margin: 4 });
     }catch(e){
@@ -4250,6 +4277,18 @@ var qrcode = function() {
     setTimeout(function(){
       qrScreen.classList.add('hidden');
       scanner.classList.remove('hidden');
+    }, 200);
+  }
+
+  // Desde el comprobante/QR, "atrás" no debe mandar hasta el escáner: el
+  // paso inmediatamente anterior fue el formulario de datos del cliente,
+  // así que ahí es donde se vuelve. El carrito y lo ya escrito (nombre,
+  // celular, NIT) siguen intactos porque generarQR() nunca los borra.
+  function volverDeQrACheckout(){
+    qrScreen.classList.remove('active');
+    setTimeout(function(){
+      qrScreen.classList.add('hidden');
+      goToCheckoutScreen();
     }, 200);
   }
 
@@ -4294,7 +4333,7 @@ var qrcode = function() {
   checkoutScanBackBtn.addEventListener('click', volverDeCheckout);
   checkoutSubmitBtn.addEventListener('click', generarQR);
 
-  qrBackBtn.addEventListener('click', volverAEscanear);
+  qrBackBtn.addEventListener('click', volverDeQrACheckout);
 
   editQrBtn.addEventListener('click', function(){
     volverAEscanear();
@@ -4318,7 +4357,7 @@ var qrcode = function() {
   // pixel sin antialiasing para que quede 100% legible por el lector.
   function generarTicketBlob(){
     return (async function(){
-      if (!ultimaCompra) return null;
+      if (!ultimaCompra || !ultimoQrData) return null;
       try{
         var payload = ultimaCompra;
 
@@ -4464,7 +4503,7 @@ var qrcode = function() {
 
         /* ---- QR (dibujado módulo por módulo, sin depender de SVG) ---- */
         var qr = qrcode(0, 'M');
-        qr.addData(JSON.stringify(payload));
+        qr.addData(JSON.stringify(ultimoQrData));
         qr.make();
         var moduleCount = qr.getModuleCount();
 
