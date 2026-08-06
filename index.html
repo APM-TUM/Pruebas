@@ -110,7 +110,8 @@
   }
   .cart-gate-btn:active{ transform: scale(.92); }
   .cart-gate-btn svg{ width: 58px; height:58px; }
-  .cart-gate-btn .count-pill{
+  .cart-gate-btn .count-pill,
+  .checkout-cart-gate-btn .count-pill{
     position:absolute; top:-8px; right:-8px;
     min-width:28px; height:28px; padding:0 8px;
     border-radius:14px;
@@ -121,7 +122,8 @@
     opacity:0; transform: scale(.5);
     transition: opacity .2s ease, transform .2s cubic-bezier(.3,1.6,.4,1);
   }
-  .cart-gate-btn .count-pill.show{ opacity:1; transform:scale(1); }
+  .cart-gate-btn .count-pill.show,
+  .checkout-cart-gate-btn .count-pill.show{ opacity:1; transform:scale(1); }
 
   .gate-tap-hint{
     margin-top: 22px;
@@ -732,6 +734,63 @@
   .primary-btn:active{ transform: scale(.97); }
   .primary-btn:disabled{ opacity:.35; box-shadow:none; }
 
+  /* ---- Mini "flow" dentro del botón principal: dos burbujas redondas
+     (paso actual -> paso siguiente) unidas por puntitos que viajan,
+     igual que los iconos grandes y limpios del carrito, pero a escala
+     de botón. Así el propio CTA anticipa visualmente qué sigue. ---- */
+  .flow-chain{
+    display:flex; align-items:center; gap:5px;
+    flex-shrink:0;
+  }
+  .flow-bubble{
+    width:30px; height:30px; border-radius:50%;
+    background: rgba(26,18,0,.82);
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0;
+  }
+  .flow-bubble svg{ width:14px; height:14px; color:#FFD98A; }
+  /* Los pasos que todavía no llegan se ven apagados */
+  .flow-bubble.mid, .flow-bubble.to{ background: rgba(26,18,0,.55); }
+  .flow-bubble.mid svg, .flow-bubble.to svg{ color: rgba(255,217,138,.7); }
+  /* "Estamos aquí": el paso actual (carrito) es el que se resalta
+     con el anillo, para que quede claro en qué parte del proceso
+     está parado el cliente ahora mismo. */
+  .flow-bubble.from{
+    position:relative;
+    background:#1a1200;
+    box-shadow: 0 0 0 3px rgba(255,255,255,.16);
+  }
+  .flow-bubble.from::after{
+    content:'';
+    position:absolute; inset:-5px;
+    border-radius:50%;
+    border: 1.5px solid rgba(255,255,255,.55);
+    animation: flowRing 1.8s ease-out infinite;
+  }
+  @keyframes flowRing{
+    0%{ transform:scale(.85); opacity:.9; }
+    75%{ opacity:0; }
+    100%{ transform:scale(1.3); opacity:0; }
+  }
+  .flow-track{ display:flex; align-items:center; gap:3px; }
+  .flow-dot{
+    width:4px; height:4px; border-radius:50%;
+    background: rgba(26,18,0,.55);
+    animation: flowDot 1.1s ease-in-out infinite;
+  }
+  .flow-track:nth-of-type(1) .flow-dot:nth-child(1){ animation-delay:0s; }
+  .flow-track:nth-of-type(1) .flow-dot:nth-child(2){ animation-delay:.14s; }
+  .flow-track:nth-of-type(1) .flow-dot:nth-child(3){ animation-delay:.28s; }
+  .flow-track:nth-of-type(2) .flow-dot{ opacity:.35; animation:none; }
+  @keyframes flowDot{
+    0%,100%{ opacity:.3; transform:translateX(0); }
+    50%{ opacity:1; transform:translateX(2px); }
+  }
+  .flow-label{ white-space:nowrap; }
+  @media (prefers-reduced-motion: reduce){
+    .flow-bubble.from::after, .flow-dot{ animation: none !important; }
+  }
+
   /* Fila de acciones del carrito: escanear otro producto (rápido, a la
      izquierda) + generar QR (acción principal, ocupa el resto). */
   .sheet-footer-actions{
@@ -770,28 +829,29 @@
   }
   .qr-screen.active{ opacity:1; transform:none; }
   .qr-topbar{ justify-content:flex-start; }
-  .back-pill{
-    display:inline-flex; align-items:center; gap:7px;
-    background:#1E3A5F;
-    border:1px solid #1E3A5F;
-    color:#fff;
-    font-family: var(--font-mono);
-    font-weight:700;
-    font-size:12.5px;
-    padding:11px 18px;
-    border-radius:999px;
-    box-shadow: 0 4px 12px rgba(30,58,95,.25), 0 1px 2px rgba(30,58,95,.3);
-    transition: transform .12s ease;
+  /* Botón "volver": mismo formato de icono redondo grande y limpio
+     que el resto de la identidad (tarjeta con degradado + sombra
+     flotante), pero en tono azul acero para señalar claramente que
+     es la acción de retroceder, sin necesidad de etiqueta de texto. */
+  .back-icon-btn{
+    width:46px; height:46px;
+    border-radius:16px;
+    background: linear-gradient(160deg, #2E5188, #1E3A5F);
+    border:1px solid rgba(255,255,255,.08);
+    display:flex; align-items:center; justify-content:center;
+    box-shadow: 0 10px 24px -12px rgba(30,58,95,.65);
+    transition: transform .15s cubic-bezier(.3,1.6,.4,1);
   }
-  .back-pill svg{ width:15px; height:15px; flex-shrink:0; }
-  .back-pill:active{ transform: scale(.96); }
+  .back-icon-btn svg{ width:19px; height:19px; color:#fff; }
+  .back-icon-btn:active{ transform: scale(.9); }
 
   .icon-nav-btn{
     width:44px; height:44px; border-radius:14px;
-    background: var(--surface);
+    background: linear-gradient(160deg, var(--surface-raised), var(--surface));
     border:1px solid var(--line);
     display:flex; align-items:center; justify-content:center;
     flex-shrink:0;
+    box-shadow: 0 10px 24px -12px rgba(0,0,0,.7);
     transition: transform .12s ease;
   }
   .icon-nav-btn svg{ width:20px; height:20px; }
@@ -885,47 +945,160 @@
     padding: 12px 20px max(18px, var(--safe-b));
     display:flex; flex-direction:column; gap:10px;
   }
-  .qr-primary-row{
+
+  /* ---- Fila de accesos del QR: mismo lenguaje visual que el resto
+     de la app (tarjeta redondeada + degradado + sombra flotante),
+     iconos grandes y limpios, sin etiquetas de texto. La acción
+     principal (guardar) se resalta en ámbar con el anillo pulsante;
+     el resto son accesos secundarios en tono oscuro. ---- */
+  .qr-icon-actions{
     display:flex; gap:10px;
   }
-  .qr-primary-row .primary-btn{ flex:1; }
-  .share-icon-btn{
-    width:56px; height:56px; border-radius:18px; flex-shrink:0;
+  .qr-icon-btn{
+    position:relative;
+    flex:1;
+    height:60px;
+    border-radius:20px;
+    background: linear-gradient(160deg, var(--surface-raised), var(--surface));
+    border: 1px solid var(--line);
+    color: var(--text-muted);
+    display:flex; align-items:center; justify-content:center;
+    box-shadow: 0 10px 24px -12px rgba(0,0,0,.7);
+    transition: transform .15s cubic-bezier(.3,1.6,.4,1);
   }
-  .share-icon-btn svg{ width:22px; height:22px; }
+  .qr-icon-btn svg{ width:23px; height:23px; }
+  .qr-icon-btn:active{ transform: scale(.92); }
+  .qr-icon-btn.accent{ color: var(--amber); }
+  .qr-icon-btn.primary{
+    flex:1.6;
+    background: linear-gradient(160deg, var(--amber), #E08A00);
+    border-color: transparent;
+    color:#1a1200;
+    box-shadow: 0 14px 30px -12px rgba(255,178,56,.55);
+  }
+  .qr-icon-btn.primary::before{
+    content:'';
+    position:absolute; inset:-6px;
+    border-radius:24px;
+    border: 1.5px solid var(--amber-soft);
+    animation: ringPulse 2.6s ease-out infinite;
+  }
+  .qr-icon-btn:disabled{ opacity:.6; }
+  .qr-icon-btn.is-loading svg{ animation: spin .8s linear infinite; }
 
   /* ---------- CHECKOUT (datos del cliente) ---------- */
   .checkout-body{
     flex:1; min-height:0; overflow-y:auto;
-    padding: 10px 20px 20px;
-    display:flex; flex-direction:column; gap:18px;
+    padding: 14px 20px 20px;
+    display:flex; flex-direction:column; gap:12px;
   }
-  .checkout-hint{
-    margin:0;
-    font-size:13px; line-height:1.5;
-    color: var(--text-muted);
-  }
-  .form-field{
-    display:flex; flex-direction:column; gap:9px;
-  }
-  .form-field label{
-    font-size:13.5px; font-weight:600; color: var(--text-muted);
-  }
-  .form-field label .opt{ opacity:.65; font-weight:400; font-size:12px; }
-  .form-field input{
+
+  /* Campos solo-icono: nada de labels ni párrafos, el icono dice qué
+     es cada campo y el placeholder aclara sin quedarse en pantalla. */
+  .form-field-icon{
+    display:flex; align-items:center; gap:13px;
     height:58px;
     background: var(--surface);
     border: 1.5px solid var(--line);
     border-radius: 18px;
     padding: 0 18px;
+    transition: border-color .15s ease, background .15s ease;
+  }
+  .form-field-icon:focus-within{ border-color: var(--amber); background: var(--surface-raised); }
+  .form-field-icon svg{
+    width:19px; height:19px; flex-shrink:0;
+    color: var(--text-muted);
+    transition: color .15s ease;
+  }
+  .form-field-icon:focus-within svg{ color: var(--amber); }
+  .form-field-icon input{
+    flex:1; min-width:0;
+    background:transparent; border:none; outline:none;
     color: var(--text);
     font-family: var(--font-body);
-    font-size:16px;
-    outline:none;
-    transition: border-color .15s ease;
+    font-size:15.5px;
   }
-  .form-field input::placeholder{ color: var(--text-muted); }
-  .form-field input:focus{ border-color: var(--amber); }
+  .form-field-icon input::placeholder{ color: var(--text-muted); }
+
+  /* ---- Stepper de progreso: reemplaza el título por un indicador
+     visual de en qué paso está y qué tan cerca está de su QR ---- */
+  .step-track{
+    display:flex; align-items:center; gap:7px;
+  }
+  .step-node{
+    position:relative;
+    width:38px; height:38px; border-radius:13px;
+    display:flex; align-items:center; justify-content:center;
+    background: linear-gradient(160deg, var(--surface-raised), var(--surface));
+    border: 1px solid var(--line);
+    color: var(--text-muted);
+    flex-shrink:0;
+    box-shadow: 0 10px 24px -12px rgba(0,0,0,.7);
+    transition: transform .15s cubic-bezier(.3,1.6,.4,1);
+  }
+  .step-node svg{ width:16px; height:16px; }
+  .step-node.done{
+    background: linear-gradient(160deg, rgba(51,209,122,.22), rgba(51,209,122,.08));
+    border-color: rgba(51,209,122,.45);
+    color: var(--ok);
+  }
+  .step-node.active{
+    background: linear-gradient(160deg, var(--surface-raised), var(--surface));
+    border-color: var(--amber);
+    color: var(--amber);
+    box-shadow: 0 10px 24px -12px rgba(0,0,0,.7), 0 0 0 4px var(--amber-soft);
+  }
+  .step-node.active::before{
+    content:'';
+    position:absolute; inset:-6px;
+    border-radius:17px;
+    border: 1.5px solid var(--amber-soft);
+    animation: ringPulse 2.6s ease-out infinite;
+  }
+  .step-node.next{ color: var(--text-muted); }
+  .step-line{
+    width:14px; height:2px; border-radius:2px;
+    background: var(--ok);
+    opacity:.55;
+  }
+  .step-line.upcoming{ background: var(--line); opacity:1; }
+
+  /* Footer de esta pantalla: mismo patrón "icono redondo + botón
+     grande" que la barra del carrito (volver a escanear / seguir). */
+  .checkout-footer-actions{ display:flex; gap:10px; }
+  .checkout-footer-actions .primary-btn{ flex:1; width:auto; }
+
+  /* Botón "vista rápida del carrito": la misma idea del botón grande
+     de la pantalla de inicio (icono + badge de cantidad), pero más
+     chico y centrado en el formulario. Debajo del icono, dentro del
+     mismo botón, se ve el total. También sirve para volver al
+     carrito si el cliente quiere ajustar algo antes de seguir. */
+  .checkout-cart-gate-btn{
+    position:relative;
+    align-self:center;
+    width: 112px; height:112px;
+    margin: 10px 0 6px;
+    border-radius: 30px;
+    background: linear-gradient(160deg, var(--surface-raised), var(--surface));
+    border: 1px solid var(--line);
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:7px;
+    box-shadow: 0 18px 44px -18px rgba(0,0,0,.75);
+    transition: transform .15s cubic-bezier(.3,1.6,.4,1);
+  }
+  .checkout-cart-gate-btn::before{
+    content:'';
+    position:absolute; inset:-12px;
+    border-radius: 38px;
+    border: 1.5px solid var(--amber-soft);
+    animation: ringPulse 2.6s ease-out infinite;
+  }
+  .checkout-cart-gate-btn:active{ transform: scale(.94); }
+  .checkout-cart-gate-btn svg{ width:32px; height:32px; color: var(--amber); }
+  .checkout-cart-gate-btn strong{
+    font-family: var(--font-display); font-weight:700; font-size:15px;
+    color: var(--amber);
+  }
+
   .checkout-summary-row{
     display:flex; align-items:center; justify-content:space-between;
     background: var(--surface-raised);
@@ -963,25 +1136,10 @@
     font-weight:600;
     overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
   }
-  .qr-secondary-row{
-    display:flex; gap:10px;
-  }
-  .ghost-nav-btn{
-    flex:1;
-    height:48px;
-    border-radius:16px;
-    background: var(--surface);
-    border:1px solid var(--line);
-    color: var(--text-muted);
-    display:flex; align-items:center; justify-content:center; gap:8px;
-    font-size:13.5px; font-weight:600;
-    transition: transform .12s ease;
-  }
-  .ghost-nav-btn svg{ width:17px; height:17px; }
-  .ghost-nav-btn:active{ transform: scale(.96); }
+
 
   @media (prefers-reduced-motion: reduce){
-    .cart-gate-btn::before, .sync-beam, .cam-laser, .rowIn, .cart-badge-btn.bump{ animation: none !important; }
+    .cart-gate-btn::before, .step-node.active::before, .qr-icon-btn.primary::before, .sync-beam, .cam-laser, .rowIn, .cart-badge-btn.bump{ animation: none !important; }
   }
 </style>
 </head>
@@ -1144,13 +1302,29 @@
             <circle cx="12" cy="13" r="4"/>
           </svg>
         </button>
-        <button id="genQrBtn" class="primary-btn" disabled>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
-            <rect x="3" y="14" width="7" height="7" rx="1"/>
-            <path d="M14 14h3v3h-3zM20 14v3M14 20h3M20 20v.01"/>
-          </svg>
-          Generar código QR
+        <button id="genQrBtn" class="primary-btn" disabled aria-label="Generar código QR">
+          <span class="flow-chain">
+            <span class="flow-bubble from">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="9" cy="21" r="1.4" fill="currentColor" stroke="none"/>
+                <circle cx="18" cy="21" r="1.4" fill="currentColor" stroke="none"/>
+                <path d="M2.5 3h2.4l2.1 11.4a2 2 0 0 0 2 1.6h8.3a2 2 0 0 0 2-1.6L21 7H6"/>
+              </svg>
+            </span>
+            <span class="flow-track"><span class="flow-dot"></span><span class="flow-dot"></span><span class="flow-dot"></span></span>
+            <span class="flow-bubble mid">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20.5c1.6-4 4.4-6 7.5-6s5.9 2 7.5 6"/></svg>
+            </span>
+            <span class="flow-track"><span class="flow-dot"></span><span class="flow-dot"></span><span class="flow-dot"></span></span>
+            <span class="flow-bubble to">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+                <rect x="3" y="14" width="7" height="7" rx="1"/>
+                <path d="M14 14h3v3h-3zM20 14v3M14 20h3M20 20v.01"/>
+              </svg>
+            </span>
+          </span>
+          <span class="sr-only">Generar código QR</span>
         </button>
       </div>
     </div>
@@ -1175,7 +1349,26 @@
       <button id="checkoutBackBtn" class="icon-nav-btn" aria-label="Volver al carrito">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
       </button>
-      <div class="brand"><span class="brand-dot"></span>Datos del cliente</div>
+
+      <!-- Stepper: carrito (hecho) -> datos (aquí) -> QR (a un paso) -->
+      <div class="step-track" aria-hidden="true">
+        <div class="step-node done">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+        </div>
+        <div class="step-line"></div>
+        <div class="step-node active">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20.5c1.6-4 4.4-6 7.5-6s5.9 2 7.5 6"/></svg>
+        </div>
+        <div class="step-line upcoming"></div>
+        <div class="step-node next">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+            <rect x="3" y="14" width="7" height="7" rx="1"/>
+            <path d="M14 14h3v3h-3zM20 14v3M14 20h3M20 20v.01"/>
+          </svg>
+        </div>
+      </div>
+
       <button id="checkoutCartBtn" class="icon-nav-btn" aria-label="Ver mi carrito">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="9" cy="21" r="1.4" fill="var(--text)" stroke="none"/>
@@ -1186,45 +1379,66 @@
     </div>
 
     <div class="checkout-body">
-      <p class="checkout-hint">Opcional — quedan guardados en tu código QR.</p>
-
-      <div class="form-field">
-        <label>Nombre <span class="opt">(opcional)</span></label>
-        <input id="clienteInput" type="text" placeholder="Ej. Juan Pérez" autocomplete="off">
+      <div class="form-field-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20.5c1.6-4 4.4-6 7.5-6s5.9 2 7.5 6"/></svg>
+        <input id="clienteInput" type="text" placeholder="Nombre (opcional)" autocomplete="off">
       </div>
-      <div class="form-field">
-        <label>Celular <span class="opt">(opcional)</span></label>
-        <input id="celularInput" type="tel" inputmode="numeric" placeholder="Ej. 70012345" autocomplete="off">
+      <div class="form-field-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 3h3l1.5 5-2.2 1.5a13 13 0 0 0 5.7 5.7L16 12.5l5 1.5v3a2 2 0 0 1-2.2 2A17 17 0 0 1 4.5 5.2 2 2 0 0 1 6.5 3z"/></svg>
+        <input id="celularInput" type="tel" inputmode="numeric" placeholder="Celular (opcional)" autocomplete="off">
       </div>
-      <div class="form-field">
-        <label>NIT / CI <span class="opt">(opcional)</span></label>
-        <input id="nitInput" type="text" inputmode="numeric" placeholder="Ej. 1234567019" autocomplete="off">
+      <div class="form-field-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="2.2"/><circle cx="8" cy="12" r="2"/><path d="M13.5 10h4M13.5 14h4"/></svg>
+        <input id="nitInput" type="text" inputmode="numeric" placeholder="NIT / CI (opcional)" autocomplete="off">
       </div>
 
-      <div class="checkout-summary-row">
-        <span>Total del pedido</span>
+      <!-- Vista rápida del carrito: mismo botón grande del inicio,
+           más chico y centrado. Sirve para volver al carrito si
+           falta ajustar algo antes de seguir. -->
+      <button id="checkoutCartPreviewBtn" class="checkout-cart-gate-btn" aria-label="Ver mi carrito y revisar productos">
+        <span id="checkoutCartCount" class="count-pill">0</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="9" cy="21" r="1.4" fill="var(--amber)" stroke="none"/>
+          <circle cx="18" cy="21" r="1.4" fill="var(--amber)" stroke="none"/>
+          <path d="M2.5 3h2.4l2.1 11.4a2 2 0 0 0 2 1.6h8.3a2 2 0 0 0 2-1.6L21 7H6"/>
+        </svg>
         <strong id="checkoutTotal">Bs 0</strong>
-      </div>
+      </button>
     </div>
 
     <div class="qr-actions">
-      <button id="checkoutSubmitBtn" class="primary-btn">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
-          <rect x="3" y="14" width="7" height="7" rx="1"/>
-          <path d="M14 14h3v3h-3zM20 14v3M14 20h3M20 20v.01"/>
-        </svg>
-        Generar código QR
-      </button>
+      <div class="checkout-footer-actions">
+        <button id="checkoutScanBackBtn" class="scan-more-btn" aria-label="Volver a escanear">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+            <circle cx="12" cy="13" r="4"/>
+          </svg>
+        </button>
+        <button id="checkoutSubmitBtn" class="primary-btn">
+          <span class="flow-chain">
+            <span class="flow-bubble from">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20.5c1.6-4 4.4-6 7.5-6s5.9 2 7.5 6"/></svg>
+            </span>
+            <span class="flow-track"><span class="flow-dot"></span><span class="flow-dot"></span><span class="flow-dot"></span></span>
+            <span class="flow-bubble to">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+                <rect x="3" y="14" width="7" height="7" rx="1"/>
+                <path d="M14 14h3v3h-3zM20 14v3M14 20h3M20 20v.01"/>
+              </svg>
+            </span>
+          </span>
+          <span class="flow-label">Generar código QR</span>
+        </button>
+      </div>
     </div>
   </div>
 
   <!-- ================= QR SCREEN ================= -->
   <div id="qrScreen" class="screen qr-screen hidden">
     <div class="topbar qr-topbar">
-      <button id="qrBackBtn" class="back-pill">
+      <button id="qrBackBtn" class="back-icon-btn" aria-label="Volver a editar mi compra">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-        Volver a editar mi compra
       </button>
     </div>
 
@@ -1232,7 +1446,7 @@
       <div class="ticket-card">
         <div class="ticket-head">
           <span class="brand-mark">&gt;_</span>
-          <strong>CreadorQR</strong>
+          <strong>A TUM</strong>
           <small>Comprobante de compra</small>
         </div>
         <div class="ticket-meta">
@@ -1252,32 +1466,35 @@
     </div>
 
     <div class="qr-actions">
-      <div class="qr-primary-row">
-        <button id="saveQrBtn" class="primary-btn">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-            <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+      <div class="qr-icon-actions">
+        <button id="editQrBtn" class="qr-icon-btn accent" aria-label="Editar productos del carrito">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="9" cy="21" r="1.4" fill="currentColor" stroke="none"/>
+            <circle cx="18" cy="21" r="1.4" fill="currentColor" stroke="none"/>
+            <path d="M2.5 3h2.4l2.1 11.4a2 2 0 0 0 2 1.6h8.3a2 2 0 0 0 2-1.6L21 7H6"/>
           </svg>
-          Guardar imagen del QR
         </button>
-        <button id="shareQrBtn" class="icon-nav-btn share-icon-btn" aria-label="Compartir imagen">
+        <button id="shareQrBtn" class="qr-icon-btn" aria-label="Compartir imagen">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
             <line x1="8.6" y1="10.6" x2="15.4" y2="6.4"/><line x1="8.6" y1="13.4" x2="15.4" y2="17.6"/>
           </svg>
         </button>
-      </div>
-      <div class="qr-secondary-row">
-        <button id="editQrBtn" class="ghost-nav-btn">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
-          Editar productos
+        <button id="newQrBtn" class="qr-icon-btn" aria-label="Limpiar y comenzar una nueva compra">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21"/>
+            <path d="M22 21H7"/><path d="m5 11 9 9"/>
+          </svg>
         </button>
-        <button id="newQrBtn" class="ghost-nav-btn">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v6h6"/></svg>
-          Nueva compra
+        <button id="saveQrBtn" class="qr-icon-btn primary" aria-label="Guardar imagen del QR">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
         </button>
       </div>
     </div>
+
   </div>
 
 <script>
@@ -2997,8 +3214,11 @@ var qrcode = function() {
   var checkoutScreen = document.getElementById('checkoutScreen');
   var checkoutBackBtn = document.getElementById('checkoutBackBtn');
   var checkoutCartBtn = document.getElementById('checkoutCartBtn');
+  var checkoutScanBackBtn = document.getElementById('checkoutScanBackBtn');
   var checkoutSubmitBtn = document.getElementById('checkoutSubmitBtn');
   var checkoutTotalEl = document.getElementById('checkoutTotal');
+  var checkoutCartCount = document.getElementById('checkoutCartCount');
+  var checkoutCartPreviewBtn = document.getElementById('checkoutCartPreviewBtn');
   var clienteInput = document.getElementById('clienteInput');
   var celularInput = document.getElementById('celularInput');
   var nitInput = document.getElementById('nitInput');
@@ -3458,6 +3678,8 @@ var qrcode = function() {
     sheetCount.textContent = '(' + total + ')';
     genQrBtn.disabled = cart.length === 0;
     cartTotalAmount.textContent = money(cartTotal());
+    checkoutCartCount.textContent = String(total);
+    checkoutCartCount.classList.toggle('show', total > 0);
 
     // list
     if (cart.length === 0){
@@ -3752,6 +3974,14 @@ var qrcode = function() {
     renderCart();
     openSheet();
   });
+  // La tarjeta del carrito dentro del formulario también lleva de
+  // vuelta al carrito, por si falta ajustar algo antes de seguir.
+  checkoutCartPreviewBtn.addEventListener('click', function(){
+    renderCart();
+    openSheet();
+  });
+  // Botón redondo del footer: va directo al escáner, sin pasar por el carrito.
+  checkoutScanBackBtn.addEventListener('click', volverDeCheckout);
   checkoutSubmitBtn.addEventListener('click', generarQR);
 
   qrBackBtn.addEventListener('click', volverAEscanear);
@@ -3849,7 +4079,7 @@ var qrcode = function() {
         var markWidth = ctx.measureText('>_ ').width;
         ctx.fillStyle = colInk;
         ctx.font = '700 15px monospace';
-        ctx.fillText('CreadorQR', padding + markWidth, y + 13);
+        ctx.fillText('A TUM', padding + markWidth, y + 13);
         y += 22;
         ctx.fillStyle = colMute;
         ctx.font = '700 10px monospace';
@@ -4091,11 +4321,13 @@ var qrcode = function() {
 
   async function guardarQR(){
     saveQrBtn.disabled = true;
-    saveQrBtn.textContent = 'Generando imagen…';
+    saveQrBtn.classList.add('is-loading');
+    saveQrBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-3-6.7"/></svg>';
 
     var blob = await generarTicketBlob();
     if (!blob){
       saveQrBtn.disabled = false;
+      saveQrBtn.classList.remove('is-loading');
       saveQrBtn.innerHTML = SAVE_QR_LABEL;
       feedback(false, 'No se pudo generar la imagen');
       return;
@@ -4104,6 +4336,7 @@ var qrcode = function() {
     descargarBlob(blob, nombreArchivoQR());
 
     saveQrBtn.disabled = false;
+    saveQrBtn.classList.remove('is-loading');
     saveQrBtn.innerHTML = SAVE_QR_LABEL;
     feedback(true, 'Imagen guardada en tu dispositivo');
   }
