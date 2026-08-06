@@ -265,30 +265,45 @@ h2 { font-family: var(--display); font-size: 20px; font-weight: 700; margin: 6px
 .review-items .ti-amount { font-family: var(--mono); font-weight: 700; text-align: right; color: var(--amber); }
 
 /* ---------- Edición del pedido en caja ---------- */
+/* Fila compacta de una sola línea: punto + nombre a la izquierda,
+   precio y controles − ×N + a la derecha (mismo lenguaje visual
+   que "Mi carrito" en CreadorQR). */
 
 .rev-item-row {
-  display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
-  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px;
+  display: flex; align-items: center; gap: 12px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 13px 12px 13px 16px;
 }
-.rev-item-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1 1 120px; }
-.rev-item-info .ti-name { font-weight: 600; font-size: 13.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); }
-.rev-item-info .ti-amount { font-family: var(--mono); font-size: 12.5px; color: var(--amber); font-weight: 600; text-align: left; }
+.rev-item-row.no-catalog { align-items: flex-start; border-color: rgba(255,90,90,.45); background: var(--danger-soft); }
 
-.qty-stepper { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.ti-dot {
+  width: 7px; height: 7px; border-radius: 50%; background: var(--laser); flex-shrink: 0;
+  box-shadow: 0 0 6px 1px var(--laser-soft);
+}
+.no-catalog .ti-dot { margin-top: 5px; background: var(--danger); box-shadow: 0 0 6px 1px rgba(255,90,90,.45); }
+
+.rev-item-info { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1 1 auto; }
+.rev-item-info .ti-name { font-weight: 600; font-size: 13.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); }
+.rev-item-info .ti-warn { font-family: var(--mono); font-size: 10.5px; color: var(--danger); line-height: 1.4; }
+
+.rev-item-right { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+.rev-item-right .ti-amount { font-family: var(--mono); font-weight: 700; font-size: 13px; color: var(--amber); white-space: nowrap; }
+
+.qty-stepper { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
 .qty-btn {
-  width: 34px; height: 34px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface-raised);
-  font-size: 18px; font-weight: 700; color: var(--text); display: flex; align-items: center; justify-content: center;
+  width: 27px; height: 27px; border-radius: 9px; border: 1px solid var(--line); background: var(--surface-raised);
+  font-size: 15px; font-weight: 700; color: var(--text); display: flex; align-items: center; justify-content: center;
   line-height: 1;
 }
-.qty-btn:active { transform: scale(0.94); }
-.qty-val { font-family: var(--mono); font-weight: 700; min-width: 20px; text-align: center; font-size: 14px; }
+.qty-btn:active { transform: scale(0.9); }
+.qty-val { font-family: var(--mono); font-weight: 700; min-width: 22px; text-align: center; font-size: 12px; color: var(--text-mute); }
 
 .ti-remove {
-  width: 34px; height: 34px; border-radius: 10px; border: none; background: var(--danger-soft); color: var(--danger);
+  width: 27px; height: 27px; border-radius: 9px; border: none; background: var(--danger-soft); color: var(--danger);
   display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
-.ti-remove svg { width: 16px; height: 16px; }
-.ti-remove:active { transform: scale(0.92); }
+.ti-remove svg { width: 13px; height: 13px; }
+.ti-remove:active { transform: scale(0.9); }
 
 .add-product-btn {
   width: 100%; border: 1.5px dashed rgba(255,178,56,.4); background: var(--surface); color: var(--amber);
@@ -341,15 +356,18 @@ h2 { font-family: var(--display); font-size: 20px; font-weight: 700; margin: 6px
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
   background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
   padding: 12px 14px; width: 100%; text-align: left;
+  transition: background .15s ease, border-color .15s ease;
 }
 .modal-product-row .mp-name { font-weight: 600; font-size: 13.5px; color: var(--text); }
 .modal-product-row .mp-price { font-family: var(--mono); color: var(--amber); font-size: 12.5px; margin-top: 2px; }
 .modal-product-row .mp-add {
   background: var(--amber); color: #1a1200; border: none; border-radius: 999px;
   width: 38px; height: 38px; font-size: 21px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-  line-height: 1; font-weight: 700;
+  line-height: 1; font-weight: 700; transition: background .15s ease, color .15s ease, transform .15s ease;
 }
 .modal-product-row .mp-add:active { transform: scale(0.92); }
+.modal-product-row .mp-add.added { background: var(--success); color: #04240f; transform: scale(1.08); }
+.modal-product-row.added-flash { background: rgba(51,209,122,.14); border-color: rgba(51,209,122,.4); }
 .modal-empty { text-align: center; color: var(--text-mute); font-size: 13px; padding: 26px 14px; line-height: 1.6; }
 
 .modal-scan-toggle {
@@ -445,9 +463,19 @@ h2 { font-family: var(--display); font-size: 20px; font-weight: 700; margin: 6px
 .toast {
   position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
   background: var(--surface-raised); color: var(--text); padding: 12px 20px; border-radius: 999px;
-  font-size: 13px; font-weight: 500; z-index: 50; box-shadow: 0 14px 34px rgba(0,0,0,0.5);
+  font-size: 13px; font-weight: 600; z-index: 70; box-shadow: 0 14px 34px rgba(0,0,0,0.5);
   text-align: center; max-width: 90%; border: 1px solid var(--line);
+  display: flex; align-items: center; justify-content: center; gap: 8px;
 }
+.toast .toast-icon {
+  width: 17px; height: 17px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.toast .toast-icon svg { width: 10px; height: 10px; }
+.toast.ok { background: var(--success-soft); color: var(--success); border-color: rgba(51,209,122,.4); }
+.toast.ok .toast-icon { background: var(--success); color: #04240f; }
+.toast.warn { background: var(--amber-soft); color: var(--amber); border-color: rgba(255,178,56,.4); }
+.toast.warn .toast-icon { background: var(--amber); color: #1a1200; }
 </style>
 </head>
 <body>
@@ -703,9 +731,14 @@ function money(n) {
   return 'Bs ' + (Math.round(n * 100) / 100).toFixed(2).replace(/\.00$/, '');
 }
 
-function showToast(msg) {
+function showToast(msg, state) {
   const t = document.getElementById('toast');
-  t.textContent = msg;
+  const iconOk = '<svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  const iconWarn = '<svg viewBox="0 0 24 24" fill="none"><path d="M12 9v4m0 4h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  t.className = 'toast' + (state ? ' ' + state : '');
+  t.innerHTML =
+    (state === 'ok' ? `<span class="toast-icon">${iconOk}</span>` : state === 'warn' ? `<span class="toast-icon">${iconWarn}</span>` : '') +
+    `<span>${escapeHtml(msg)}</span>`;
   t.hidden = false;
   clearTimeout(showToast._t);
   showToast._t = setTimeout(() => { t.hidden = true; }, 2600);
@@ -869,6 +902,55 @@ function cargarCatalogoCaja() {
 
 /* ---------------- Interpretar el QR ---------------- */
 
+// El QR ahora solo trae, por producto, su ID y la cantidad ({i, q}) — ya
+// no repite nombre/precio/subtotal, porque este dispositivo ya tiene el
+// catálogo completo guardado (mismo caché que usa la app de toma de
+// pedidos). Esto hace que el QR sea mucho más simple y rápido de leer,
+// sobre todo en compras con varios productos.
+//
+// Aquí se "rehidrata" cada item a la forma completa que el resto de la
+// app espera (RPedPro_Id / RPedPro_Descripcion / RPedPro_Precio /
+// Ped_Cantidad / Ped_Total), buscando cada producto en productosCatalogo
+// por su ID. Si un producto no aparece en el catálogo local (p. ej. caché
+// desactualizado), no se rompe el pedido: se deja una fila marcada para
+// que el cajero la note y la revise a mano.
+//
+// Compatibilidad: si llega un QR con el formato largo anterior (ya tenía
+// RPedPro_Id/RPedPro_Descripcion/RPedPro_Precio/Ped_Total), también se
+// acepta sin problema.
+function hidratarItemsDesdeQR(itemsQR) {
+  const noEncontrados = [];
+  const items = itemsQR.map((raw) => {
+    const id = raw.i != null ? raw.i : raw.RPedPro_Id;
+    const cantidad = Number(raw.q != null ? raw.q : raw.Ped_Cantidad) || 1;
+    const prod = productosCatalogo.find((p) => p.Pro_Id === id);
+
+    if (!prod) {
+      noEncontrados.push(id);
+      const precioRespaldo = Number(raw.RPedPro_Precio) || 0;
+      return {
+        RPedPro_Id: id,
+        RPedPro_Descripcion: raw.RPedPro_Descripcion || `Producto sin catálogo (${id})`,
+        RPedPro_Precio: precioRespaldo,
+        Ped_Cantidad: cantidad,
+        Ped_Total: round2(precioRespaldo * cantidad),
+        RPedPro_SinCatalogo: true
+      };
+    }
+
+    const precio = Number(prod.Pro_Precio) || 0;
+    return {
+      RPedPro_Id: prod.Pro_Id,
+      RPedPro_Descripcion: prod.Pro_Descripcion,
+      RPedPro_Precio: precio,
+      Ped_Cantidad: cantidad,
+      Ped_Total: round2(precio * cantidad)
+    };
+  });
+  return { items, noEncontrados };
+}
+
+
 // Intenta leer la fecha/hora del pedido en los formatos más comunes:
 // "AAAA-MM-DD" o "DD/MM/AAAA" para la fecha, y "HH:MM" (24h o con AM/PM) para la hora.
 function parseFechaHoraPedido(fechaStr, horaStr) {
@@ -955,6 +1037,13 @@ function handleScannedText(text) {
     return;
   }
 
+  // Completa nombre/precio/subtotal de cada producto con el catálogo
+  // local (el QR solo trae ID + cantidad) y recalcula el total del pedido
+  // a partir de eso, ya que el QR tampoco trae el total.
+  const { items, noEncontrados } = hidratarItemsDesdeQR(data.items);
+  data.items = items;
+  data.Ven_Total = round2(items.reduce((sum, it) => sum + (Number(it.Ped_Total) || 0), 0));
+
   const vigencia = validarVigenciaPedido(data);
   if (!vigencia.ok) {
     showScanError(vigencia.motivo);
@@ -964,6 +1053,15 @@ function handleScannedText(text) {
   currentPedido = data;
   renderReview();
   showView('reviewView');
+
+  if (noEncontrados.length > 0) {
+    showToast(
+      noEncontrados.length === 1
+        ? '1 producto no está en tu catálogo local. Revísalo antes de cobrar.'
+        : `${noEncontrados.length} productos no están en tu catálogo local. Revísalos antes de cobrar.`,
+      'warn'
+    );
+  }
 }
 
 /* ---------------- Revisión del pedido ---------------- */
@@ -991,20 +1089,24 @@ function renderReview() {
   } else {
     p.items.forEach((it, idx) => {
       const row = document.createElement('div');
-      row.className = 'rev-item-row';
+      row.className = 'rev-item-row' + (it.RPedPro_SinCatalogo ? ' no-catalog' : '');
       row.innerHTML = `
+        <span class="ti-dot"></span>
         <div class="rev-item-info">
           <span class="ti-name">${escapeHtml(it.RPedPro_Descripcion)}</span>
+          ${it.RPedPro_SinCatalogo ? '<span class="ti-warn">⚠ No está en tu catálogo local · revisa precio</span>' : ''}
+        </div>
+        <div class="rev-item-right">
           <span class="ti-amount">${money(it.Ped_Total)}</span>
+          <div class="qty-stepper">
+            <button type="button" class="qty-btn" data-action="minus" data-idx="${idx}" aria-label="Restar uno">−</button>
+            <span class="qty-val">×${it.Ped_Cantidad}</span>
+            <button type="button" class="qty-btn" data-action="plus" data-idx="${idx}" aria-label="Sumar uno">+</button>
+          </div>
+          <button type="button" class="ti-remove" data-idx="${idx}" aria-label="Quitar producto">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m-8 0 1 12a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1l1-12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
         </div>
-        <div class="qty-stepper">
-          <button type="button" class="qty-btn" data-action="minus" data-idx="${idx}" aria-label="Restar uno">−</button>
-          <span class="qty-val">${it.Ped_Cantidad}</span>
-          <button type="button" class="qty-btn" data-action="plus" data-idx="${idx}" aria-label="Sumar uno">+</button>
-        </div>
-        <button type="button" class="ti-remove" data-idx="${idx}" aria-label="Quitar producto">
-          <svg viewBox="0 0 24 24" fill="none"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m-8 0 1 12a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1l1-12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </button>
       `;
       wrap.appendChild(row);
     });
@@ -1068,7 +1170,7 @@ function agregarProductoAlPedido(prod) {
   pedidoEditado = true;
   recalcularTotales();
   renderReview();
-  showToast(`${prod.Pro_Descripcion} añadido al pedido`);
+  showToast(`${prod.Pro_Descripcion} añadido al pedido`, 'ok');
 }
 
 /* ---------------- Modal: agregar producto olvidado ---------------- */
@@ -1234,6 +1336,25 @@ function renderAddProductList(query) {
     `;
     wrap.appendChild(row);
   });
+}
+
+// Confirmación visual inmediata al agregar un producto desde la lista del
+// modal: la fila se tiñe de verde y el "+" se convierte en un check por un
+// momento. Es un respaldo directo en el punto donde el registrador está
+// mirando, además del toast general (que puede quedar tapado por el
+// teclado si se estaba buscando por nombre).
+function flashModalRowAdded(row, btn) {
+  if (!row || !btn) return;
+  row.classList.add('added-flash');
+  btn.classList.add('added');
+  const original = btn.innerHTML;
+  btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  clearTimeout(row._addedFlashTimer);
+  row._addedFlashTimer = setTimeout(() => {
+    row.classList.remove('added-flash');
+    btn.classList.remove('added');
+    btn.innerHTML = original;
+  }, 900);
 }
 
 /* ---------------- Cobro ---------------- */
@@ -1426,8 +1547,8 @@ async function reintentarPendientes() {
   }
   savePendientes(restantes);
   renderPendingList();
-  if (enviados > 0) showToast(`${enviados} venta(s) sincronizada(s).`);
-  if (restantes.length > 0) showToast(`${restantes.length} sigue(n) pendiente(s).`);
+  if (enviados > 0) showToast(`${enviados} venta(s) sincronizada(s).`, 'ok');
+  if (restantes.length > 0) showToast(`${restantes.length} sigue(n) pendiente(s).`, 'warn');
 }
 
 /* ---------------- Arranque ---------------- */
@@ -1475,7 +1596,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const btn = ev.target.closest('.mp-add');
     if (!btn) return;
     const prod = productosCatalogo.find((p) => p.Pro_Id === btn.dataset.id);
-    if (prod) agregarProductoAlPedido(prod);
+    if (prod) {
+      agregarProductoAlPedido(prod);
+      flashModalRowAdded(btn.closest('.modal-product-row'), btn);
+    }
   });
 
   document.getElementById('startCameraBtn').addEventListener('click', startCamera);
