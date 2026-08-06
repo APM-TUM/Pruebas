@@ -606,7 +606,7 @@
     transition: background .12s ease, transform .1s ease;
   }
   .search-row:active{ transform: scale(.98); background: var(--surface-raised); }
-  .search-row.added-flash{ background: var(--amber-soft); border-color: var(--amber-soft); }
+  .search-row.added-flash{ background: rgba(51,209,122,.14); border-color: rgba(51,209,122,.4); }
   .search-row-name{
     flex:1; min-width:0;
     font-size:14.5px;
@@ -625,8 +625,10 @@
     background: var(--amber-soft);
     display:flex; align-items:center; justify-content:center;
     color: var(--amber);
+    transition: background .15s ease, color .15s ease, transform .15s ease;
   }
   .search-row-add svg{ width:15px; height:15px; }
+  .search-row-add.added{ background: var(--ok); color:#04240f; transform: scale(1.08); }
 
   /* ---------- CART SHEET ---------- */
   .sheet-backdrop{
@@ -3822,6 +3824,8 @@ var qrcode = function() {
     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>';
   var SEARCH_ADD_ICON_SVG =
     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>';
+  var SEARCH_ADDED_ICON_SVG =
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>';
 
   function searchHintHTML(text){
     return '<div class="search-hint">' + SEARCH_ICON_SVG + '<span>' + text + '</span></div>';
@@ -3871,6 +3875,9 @@ var qrcode = function() {
 
   // Tocar un resultado lo agrega directo al carrito, igual que un escaneo
   // o un código digitado; la lista se queda ahí para seguir agregando.
+  // La fila se pone verde y el "+" se convierte en un check por un
+  // momento, para que quede clarísimo que el producto SÍ entró al
+  // carrito (antes esto duraba solo 260ms y casi no se notaba).
   searchResults.addEventListener('click', function(e){
     var row = e.target.closest('.search-row');
     if (!row) return;
@@ -3879,9 +3886,19 @@ var qrcode = function() {
     if (!p) return;
     vibrate(15);
     addProductToCart(p);
-    row.classList.add('added-flash');
-    setTimeout(function(){ row.classList.remove('added-flash'); }, 260);
+    flashSearchRowAdded(row);
   });
+
+  function flashSearchRowAdded(row){
+    var addIcon = row.querySelector('.search-row-add');
+    row.classList.add('added-flash');
+    if (addIcon){ addIcon.classList.add('added'); addIcon.innerHTML = SEARCH_ADDED_ICON_SVG; }
+    clearTimeout(row._addedFlashTimer);
+    row._addedFlashTimer = setTimeout(function(){
+      row.classList.remove('added-flash');
+      if (addIcon){ addIcon.classList.remove('added'); addIcon.innerHTML = SEARCH_ADD_ICON_SVG; }
+    }, 900);
+  }
 
   // ---------- Cart ----------
   // Cada producto (identificado por su código de barras) ocupa una sola
