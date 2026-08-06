@@ -527,6 +527,107 @@
   .manual-send:active{ transform: scale(.88); }
   .manual-send:disabled{ opacity:.35; }
 
+  /* ---------- BÚSQUEDA POR NOMBRE / DESCRIPCIÓN ----------
+     Mismo lenguaje visual que el panel manual (fila con borde ámbar al
+     enfocar, botón cuadrado ámbar), pero en vez de un solo botón de
+     "enviar" es una búsqueda en vivo: debajo de la fila aparece una
+     lista de coincidencias, tocar una fila la agrega directo al carrito. */
+  .search-panel{
+    flex:1;
+    min-height:0;
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+    padding-top: 4px;
+  }
+  .search-input-row{
+    flex-shrink:0;
+    width:100%;
+    display:flex; align-items:center;
+    background: var(--surface);
+    border: 1.5px solid var(--line);
+    border-radius: 20px;
+    padding: 6px 6px 6px 18px;
+    transition: border-color .15s ease;
+  }
+  .search-input-row:focus-within{ border-color: var(--amber); }
+  .search-input-row .search-icon{
+    width:19px; height:19px; color: var(--text-muted); flex-shrink:0;
+  }
+  .search-input-row input{
+    flex:1;
+    background:none; border:none; outline:none;
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 15.5px;
+    min-width:0;
+    padding: 14px 10px;
+  }
+  .search-input-row input::placeholder{ color: var(--text-muted); }
+  .search-clear-btn{
+    width:40px; height:40px; border-radius:12px;
+    display:flex; align-items:center; justify-content:center;
+    flex-shrink:0;
+    color: var(--text-muted);
+    opacity:0; pointer-events:none; transform: scale(.8);
+    transition: opacity .15s ease, transform .15s ease, background .12s ease;
+  }
+  .search-clear-btn svg{ width:16px; height:16px; }
+  .search-clear-btn.show{ opacity:1; pointer-events:auto; transform: scale(1); }
+  .search-clear-btn:active{ background: var(--surface-raised); }
+
+  .search-results{
+    flex:1;
+    min-height:0;
+    overflow-y:auto;
+    -webkit-overflow-scrolling: touch;
+    display:flex; flex-direction:column; gap:8px;
+    padding-bottom: 4px;
+  }
+  .search-hint{
+    flex:1;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:16px;
+    color: var(--text-muted);
+    text-align:center;
+    font-size:14px;
+    padding: 0 16px;
+  }
+  .search-hint svg{ width:52px; height:52px; color: var(--amber); opacity:.85; }
+  .search-row{
+    display:flex; align-items:center; gap:12px;
+    width:100%;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 13px 14px;
+    text-align:left;
+    animation: rowIn .2s cubic-bezier(.2,.9,.3,1);
+    transition: background .12s ease, transform .1s ease;
+  }
+  .search-row:active{ transform: scale(.98); background: var(--surface-raised); }
+  .search-row.added-flash{ background: var(--amber-soft); border-color: var(--amber-soft); }
+  .search-row-name{
+    flex:1; min-width:0;
+    font-size:14.5px;
+    overflow:hidden; text-overflow:ellipsis;
+    display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;
+  }
+  .search-row-price{
+    flex-shrink:0;
+    font-family: var(--font-mono); font-weight:700; font-size:14px;
+    color: var(--amber);
+    white-space:nowrap;
+  }
+  .search-row-add{
+    flex-shrink:0;
+    width:30px; height:30px; border-radius:10px;
+    background: var(--amber-soft);
+    display:flex; align-items:center; justify-content:center;
+    color: var(--amber);
+  }
+  .search-row-add svg{ width:15px; height:15px; }
+
   /* ---------- CART SHEET ---------- */
   .sheet-backdrop{
     position:fixed; inset:0;
@@ -1231,6 +1332,11 @@
           <path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M6 14h.01M18 14h.01M10 14h4"/>
         </svg>
       </button>
+      <button id="modeSearchBtn" class="mode-btn" aria-label="Buscar producto por nombre">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>
+        </svg>
+      </button>
     </div>
 
     <p id="catalogStatus" class="catalog-status"></p>
@@ -1268,6 +1374,20 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12H4M13 5l7 7-7 7"/></svg>
           </button>
         </div>
+      </div>
+
+      <!-- Search by name/description panel -->
+      <div id="searchPanel" class="search-panel hidden">
+        <div class="search-input-row">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>
+          </svg>
+          <input id="searchInput" type="text" inputmode="search" placeholder="Buscar producto por nombre" autocomplete="off">
+          <button id="searchClearBtn" class="search-clear-btn" aria-label="Limpiar búsqueda">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+        <div id="searchResults" class="search-results"></div>
       </div>
     </div>
 
@@ -3199,6 +3319,13 @@ var qrcode = function() {
   var manualInput = document.getElementById('manualInput');
   var manualSendBtn = document.getElementById('manualSendBtn');
 
+  var modeSearchBtn = document.getElementById('modeSearchBtn');
+  var searchPanel = document.getElementById('searchPanel');
+  var searchInput = document.getElementById('searchInput');
+  var searchClearBtn = document.getElementById('searchClearBtn');
+  var searchResults = document.getElementById('searchResults');
+  var searchResultsCache = [];
+
   var sheetBackdrop = document.getElementById('sheetBackdrop');
   var cartSheet = document.getElementById('cartSheet');
   var sheetCount = document.getElementById('sheetCount');
@@ -3347,7 +3474,7 @@ var qrcode = function() {
     // Solo se activa si el gesto empieza en la parte de arriba (marca,
     // barra de modo, texto de estado) y nunca sobre la cámara, el teclado
     // manual o los botones, para no interferir con esos controles.
-    if (target.closest('#reader') || target.closest('.manual-panel') ||
+    if (target.closest('#reader') || target.closest('.manual-panel') || target.closest('.search-panel') ||
         target.closest('#cartBadgeBtn') || target.closest('#refreshCatBtn')) return false;
     return !!target.closest('.topbar') || !!target.closest('.mode-toggle') || !!target.closest('.catalog-status') || target.id === 'scanner';
   }
@@ -3412,6 +3539,34 @@ var qrcode = function() {
     return null;
   }
 
+  // Quita tildes/mayúsculas para que la búsqueda por nombre encuentre el
+  // producto sin importar cómo lo haya escrito la cajera ("Camisa" ==
+  // "camisa" == "cámisa").
+  function normalizarTexto(s){
+    return String(s || '')
+      .toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .trim();
+  }
+
+  var MAX_RESULTADOS_BUSQUEDA = 40;
+
+  // Busca por la descripción del producto (que en el catálogo es también
+  // el nombre visible): coincidencia parcial, sin acentos ni mayúsculas.
+  function buscarProductosPorNombre(query){
+    var q = normalizarTexto(query);
+    if (!q) return [];
+    var out = [];
+    for (var i=0; i<productos.length; i++){
+      var p = productos[i];
+      if (normalizarTexto(p.Pro_Descripcion).indexOf(q) !== -1){
+        out.push(p);
+        if (out.length >= MAX_RESULTADOS_BUSQUEDA) break;
+      }
+    }
+    return out;
+  }
+
   // ---------- Alerta verde / ámbar / roja + sonido + vibración ----------
   // state: true = añadido (verde) | 'dup' = ya estaba en el carrito (ámbar) | false = error (rojo)
   function beep(state){
@@ -3469,32 +3624,40 @@ var qrcode = function() {
   var CAM_ICON_OFF = '<path d="M1 1l22 22"/><path d="M21 21H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h4"/><path d="M14.5 6l1.5 3H21a2 2 0 0 1 2 2v9.34"/><circle cx="12" cy="13" r="4"/>';
 
   function setMode(mode){
+    modeCameraBtn.classList.toggle('selected', mode === 'camera');
+    modeKeyboardBtn.classList.toggle('selected', mode === 'keyboard');
+    modeSearchBtn.classList.toggle('selected', mode === 'search');
+
+    cameraPanel.classList.toggle('hidden', mode !== 'camera');
+    manualPanel.classList.toggle('hidden', mode !== 'keyboard');
+    searchPanel.classList.toggle('hidden', mode !== 'search');
+
     if (mode === 'camera'){
-      modeCameraBtn.classList.add('selected');
-      modeKeyboardBtn.classList.remove('selected');
-      cameraPanel.classList.remove('hidden');
-      manualPanel.classList.add('hidden');
       startCamera();
       camToggleBtn.classList.remove('off');
       camToggleIcon.innerHTML = CAM_ICON_ON;
       camToggleLabel.textContent = 'Apagar cámara';
       camToggleBtn.setAttribute('aria-label', 'Apagar cámara');
-    } else {
-      modeKeyboardBtn.classList.add('selected');
-      modeCameraBtn.classList.remove('selected');
-      manualPanel.classList.remove('hidden');
-      cameraPanel.classList.add('hidden');
-      stopCamera();
+      return;
+    }
+
+    stopCamera();
+    camToggleBtn.classList.add('off');
+    camToggleBtn.classList.remove('paused');
+    camToggleIcon.innerHTML = CAM_ICON_OFF;
+    camToggleLabel.textContent = 'Activar cámara';
+    camToggleBtn.setAttribute('aria-label', 'Activar cámara');
+
+    if (mode === 'keyboard'){
       setTimeout(function(){ manualInput.focus(); }, 50);
-      camToggleBtn.classList.add('off');
-      camToggleBtn.classList.remove('paused');
-      camToggleIcon.innerHTML = CAM_ICON_OFF;
-      camToggleLabel.textContent = 'Activar cámara';
-      camToggleBtn.setAttribute('aria-label', 'Activar cámara');
+    } else if (mode === 'search'){
+      renderSearchResults();
+      setTimeout(function(){ searchInput.focus(); }, 50);
     }
   }
   modeCameraBtn.addEventListener('click', function(){ setMode('camera'); });
   modeKeyboardBtn.addEventListener('click', function(){ setMode('keyboard'); });
+  modeSearchBtn.addEventListener('click', function(){ setMode('search'); });
   camToggleBtn.addEventListener('click', function(){
     vibrate(10);
     setMode(modeCameraBtn.classList.contains('selected') ? 'keyboard' : 'camera');
@@ -3647,6 +3810,72 @@ var qrcode = function() {
     manualInput.focus();
   }
 
+  // ---------- Búsqueda por nombre / descripción ----------
+  var SEARCH_ICON_SVG =
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>';
+  var SEARCH_ADD_ICON_SVG =
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>';
+
+  function searchHintHTML(text){
+    return '<div class="search-hint">' + SEARCH_ICON_SVG + '<span>' + text + '</span></div>';
+  }
+
+  // Se llama con cada tecla (lista corta de productos, no hace falta
+  // "debounce") y también al entrar al modo búsqueda, por si el catálogo
+  // se actualizó mientras tanto.
+  function renderSearchResults(){
+    var q = searchInput.value.trim();
+    searchClearBtn.classList.toggle('show', q.length > 0);
+
+    if (!q){
+      searchResultsCache = [];
+      searchResults.innerHTML = searchHintHTML('Escribe el nombre del producto');
+      return;
+    }
+
+    var resultados = buscarProductosPorNombre(q);
+    searchResultsCache = resultados;
+
+    if (!resultados.length){
+      searchResults.innerHTML = searchHintHTML('Sin resultados para "' + escapeHtml(q) + '"');
+      return;
+    }
+
+    var html = '';
+    for (var i = 0; i < resultados.length; i++){
+      var p = resultados[i];
+      html +=
+        '<button type="button" class="search-row" data-index="' + i + '">' +
+          '<span class="search-row-name">' + escapeHtml(p.Pro_Descripcion || '') + '</span>' +
+          '<span class="search-row-price">' + money(Number(p.Pro_Precio) || 0) + '</span>' +
+          '<span class="search-row-add" aria-hidden="true">' + SEARCH_ADD_ICON_SVG + '</span>' +
+        '</button>';
+    }
+    searchResults.innerHTML = html;
+  }
+
+  searchInput.addEventListener('input', renderSearchResults);
+
+  searchClearBtn.addEventListener('click', function(){
+    searchInput.value = '';
+    renderSearchResults();
+    searchInput.focus();
+  });
+
+  // Tocar un resultado lo agrega directo al carrito, igual que un escaneo
+  // o un código digitado; la lista se queda ahí para seguir agregando.
+  searchResults.addEventListener('click', function(e){
+    var row = e.target.closest('.search-row');
+    if (!row) return;
+    var idx = Number(row.getAttribute('data-index'));
+    var p = searchResultsCache[idx];
+    if (!p) return;
+    vibrate(15);
+    addProductToCart(p);
+    row.classList.add('added-flash');
+    setTimeout(function(){ row.classList.remove('added-flash'); }, 260);
+  });
+
   // ---------- Cart ----------
   // Cada producto (identificado por su código de barras) ocupa una sola
   // fila en el carrito. Si se vuelve a escanear el mismo código, no se
@@ -3657,6 +3886,14 @@ var qrcode = function() {
       feedback(false, 'Código ' + code + ' no encontrado');
       return;
     }
+    addProductToCart(p);
+  }
+
+  // Agrega un producto ya identificado (por cámara/código, o elegido en la
+  // lista de resultados de la búsqueda por nombre). Toda vía de entrada al
+  // carrito pasa por aquí para que el comportamiento sea siempre el mismo.
+  function addProductToCart(p){
+    if (!p) return;
     var item = null;
     for (var i=0; i<cart.length; i++){ if (cart[i].id === p.Pro_Id){ item = cart[i]; break; } }
     if (item){
