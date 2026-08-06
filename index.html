@@ -3850,10 +3850,21 @@ var qrcode = function() {
   // Desde el carrito, vuelve directo a escanear sin pasos extra: cierra
   // la hoja del carrito y enciende la cámara al instante (aunque estuviera
   // en pausa por haber abierto el carrito, o en modo teclado).
+  //
+  // OJO: este mismo carrito también se puede abrir desde "Datos del
+  // cliente" (checkout), y ahí la pantalla del escáner (donde vive la
+  // cámara) está oculta debajo. Si no volvemos primero a esa pantalla,
+  // la cámara se enciende "por detrás" del formulario de checkout y
+  // el usuario ve que no pasa nada, aunque la cámara sí esté activa.
   scanMoreBtn.addEventListener('click', function(){
     vibrate(10);
     closeSheet();
-    setMode('camera');
+    if (!checkoutScreen.classList.contains('hidden')){
+      volverDeCheckout();
+      setTimeout(function(){ setMode('camera'); }, 220);
+    } else {
+      setMode('camera');
+    }
   });
 
   // ---------- Generar QR ----------
