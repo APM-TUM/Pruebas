@@ -3151,6 +3151,8 @@ var qrcode = function() {
   var SCAN_COOLDOWN_MS = 1800;
   var html5QrCode = null;
   var cameraStarting = false;
+  var cameraStopPromise = null; // apagado pendiente de la cámara (ver startCamera/stopCamera)
+  var cameraStartTimeout = null;
   var audioCtxScan = null;
 
   // ---------- Elements ----------
@@ -3479,6 +3481,13 @@ var qrcode = function() {
   });
 
   // ---------- Camera ----------
+  // En celulares, el hardware de cámara tarda en liberarse cuando se
+  // apaga (p. ej. al abrir el carrito, que pausa la cámara). Si se pide
+  // una cámara nueva ANTES de que esa liberación termine, el navegador
+  // móvil puede quedarse "colgado" sin abrir ni fallar (en PC esto casi
+  // nunca pasa porque las webcams sueltan el stream al instante). Por
+  // eso esperamos a que cualquier apagado pendiente (cameraStopPromise)
+  // termine antes de pedir la cámara de nuevo.
   function startCamera(){
     camPaused.classList.add('hidden');
     if (html5QrCode || cameraStarting) return;
@@ -3499,32 +3508,58 @@ var qrcode = function() {
       ];
     }catch(e){ formats = null; }
 
-    try{
-      html5QrCode = new Html5Qrcode("reader", formats ? { formatsToSupport: formats, verbose:false } : { verbose:false });
-      html5QrCode.start(
-        { facingMode: "environment" },
-        { fps: 10, qrbox: { width: 230, height: 230 } },
-        function onSuccess(decodedText){ handleScan(decodedText); },
-        function onError(){ /* per-frame miss, ignore */ }
-      ).then(function(){
+    var ready = cameraStopPromise || Promise.resolve();
+
+    // Salvavidas: si por lo que sea la cámara del celular nunca resuelve
+    // (ni éxito ni error, algo que sí se ve en algunos Android/iOS),
+    // no dejamos al usuario mirando una pantalla congelada para siempre:
+    // a los 8s mostramos el aviso con botón para reintentar.
+    clearTimeout(cameraStartTimeout);
+    cameraStartTimeout = setTimeout(function(){
+      if (cameraStarting){
         cameraStarting = false;
-      }).catch(function(){
+        showCamFallback();
+      }
+    }, 8000);
+
+    ready.then(function(){
+      // Pudo cambiar de pantalla/modo mientras esperábamos el apagado.
+      if (!cameraStarting) return;
+      try{
+        html5QrCode = new Html5Qrcode("reader", formats ? { formatsToSupport: formats, verbose:false } : { verbose:false });
+        html5QrCode.start(
+          { facingMode: "environment" },
+          { fps: 10, qrbox: { width: 230, height: 230 } },
+          function onSuccess(decodedText){ handleScan(decodedText); },
+          function onError(){ /* per-frame miss, ignore */ }
+        ).then(function(){
+          cameraStarting = false;
+          clearTimeout(cameraStartTimeout);
+        }).catch(function(){
+          cameraStarting = false;
+          clearTimeout(cameraStartTimeout);
+          html5QrCode = null;
+          showCamFallback();
+        });
+      }catch(e){
         cameraStarting = false;
+        clearTimeout(cameraStartTimeout);
         html5QrCode = null;
         showCamFallback();
-      });
-    }catch(e){
-      cameraStarting = false;
-      html5QrCode = null;
-      showCamFallback();
-    }
+      }
+    });
   }
 
   function stopCamera(){
+    clearTimeout(cameraStartTimeout);
+    cameraStarting = false;
     if (html5QrCode){
       var ref = html5QrCode;
       html5QrCode = null;
-      ref.stop().then(function(){ try{ ref.clear(); }catch(e){} }).catch(function(){});
+      cameraStopPromise = ref.stop()
+        .then(function(){ try{ ref.clear(); }catch(e){} })
+        .catch(function(){})
+        .then(function(){ cameraStopPromise = null; });
     }
   }
 
