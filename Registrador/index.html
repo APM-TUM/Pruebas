@@ -708,6 +708,13 @@ const LS_PRODUCTOS = 'atumti_productos_cache';
    cambiaron de un día para otro. */
 const HORA_APERTURA = 8; // 8:00 a.m.
 
+/* Interruptor temporal para pruebas: en false, se OMITE por completo la
+   validación de "mismo día / después de hora de apertura" al leer un QR
+   (útil para probar el lector con pedidos viejos o generados a cualquier
+   hora). Cuando termines de probar, vuelve a poner esto en true para
+   reactivar la restricción de horario sin tocar nada más del código. */
+const VALIDAR_VIGENCIA_PEDIDO = false;
+
 let currentPedido = null;   // JSON leído del QR
 let tipoPagoSeleccionado = 'Efectivo'; // 'Efectivo' o 'QR'
 let stream = null;          // MediaStream de la cámara
@@ -1000,6 +1007,11 @@ function esMismoDia(a, b) {
 // de apertura. Si no cumple, se rechaza para evitar registrar ventas con
 // precios/productos que ya cambiaron de un día para otro.
 function validarVigenciaPedido(data) {
+  // Bandera de pruebas activa: se salta toda la validación de día/hora
+  // (ver VALIDAR_VIGENCIA_PEDIDO más arriba). La lógica original queda
+  // intacta abajo, lista para cuando se reactive.
+  if (!VALIDAR_VIGENCIA_PEDIDO) return { ok: true };
+
   const fechaPedido = parseFechaHoraPedido(data.Ven_Fecha, data.Ven_Hora);
   if (!fechaPedido) {
     return { ok: false, motivo: 'No se pudo leer la fecha/hora de este pedido. Por seguridad, no se aceptará.' };
