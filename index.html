@@ -3856,14 +3856,19 @@ var qrcode = function() {
   // cámara) está oculta debajo. Si no volvemos primero a esa pantalla,
   // la cámara se enciende "por detrás" del formulario de checkout y
   // el usuario ve que no pasa nada, aunque la cámara sí esté activa.
+  // Desde el carrito, este botón únicamente navega de vuelta a la
+  // pantalla inicial del escáner (no fuerza el encendido de la cámara
+  // desde aquí, eso lo maneja la propia pantalla del escáner). Si
+  // el carrito se abrió desde "Datos del cliente", primero hay que
+  // cerrar esa pantalla para que el escáner quede visible.
   scanMoreBtn.addEventListener('click', function(){
     vibrate(10);
     closeSheet();
     if (!checkoutScreen.classList.contains('hidden')){
       volverDeCheckout();
-      setTimeout(function(){ setMode('camera'); }, 220);
-    } else {
-      setMode('camera');
+    } else if (scanner.classList.contains('hidden')){
+      scanner.classList.remove('hidden');
+      requestAnimationFrame(function(){ scanner.classList.add('active'); });
     }
   });
 
