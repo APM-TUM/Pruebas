@@ -279,6 +279,10 @@
   .action-btn svg{ width:28px; height:28px; flex-shrink:0; }
 
   .cam-toggle-btn.off{ color: var(--laser); border-color: var(--laser-soft); background: rgba(255,90,54,.08); }
+  /* Cámara en pausa (no es un error, solo está detenida temporalmente):
+     mismo tono ámbar que el resto de "esto necesita tu atención" en la
+     identidad, para diferenciarlo del rojo/laser que sí es un fallo real. */
+  .cam-toggle-btn.paused{ color: var(--amber); border-color: var(--amber-soft); background: var(--amber-soft); }
 
   .cart-action-btn{
     color: var(--amber);
@@ -453,18 +457,33 @@
     background: var(--surface);
     z-index:6;
   }
-  .cam-paused svg{ width:34px; height:34px; opacity:.6; }
+  /* El ícono y el mensaje pasan a ámbar (mismo lenguaje que el resto de
+     "toca aquí para continuar" de la app) en vez de gris neutro, para
+     que de un vistazo se note que la cámara está detenida y hay algo
+     que hacer, no que simplemente no cargó. */
+  .cam-paused svg{ width:34px; height:34px; color: var(--amber); opacity:1; }
+  .cam-paused span{ color: var(--text); font-weight:600; }
   .cam-resume-btn{
-    padding: 11px 24px;
+    position:relative;
+    padding: 13px 28px;
     border-radius: 999px;
-    border: 1px solid var(--line);
-    background: var(--surface-raised);
-    color: var(--text);
+    border: 1px solid transparent;
+    background: linear-gradient(160deg, var(--amber), #E08A00);
+    color:#1a1200;
     font-family: var(--font-display);
-    font-weight:600;
+    font-weight:700;
     font-size:13.5px;
     letter-spacing:.01em;
     cursor:pointer;
+    box-shadow: 0 14px 30px -14px rgba(255,178,56,.6);
+    transition: transform .12s ease;
+  }
+  .cam-resume-btn::before{
+    content:'';
+    position:absolute; inset:-6px;
+    border-radius: 999px;
+    border: 1.5px solid var(--amber-soft);
+    animation: ringPulse 2.6s ease-out infinite;
   }
   .cam-resume-btn:active{ transform: scale(.95); }
 
@@ -1139,7 +1158,7 @@
 
 
   @media (prefers-reduced-motion: reduce){
-    .cart-gate-btn::before, .step-node.active::before, .qr-icon-btn.primary::before, .sync-beam, .cam-laser, .rowIn, .cart-badge-btn.bump{ animation: none !important; }
+    .cart-gate-btn::before, .step-node.active::before, .qr-icon-btn.primary::before, .cam-resume-btn::before, .sync-beam, .cam-laser, .rowIn, .cart-badge-btn.bump{ animation: none !important; }
   }
 </style>
 </head>
@@ -3468,6 +3487,7 @@ var qrcode = function() {
       stopCamera();
       setTimeout(function(){ manualInput.focus(); }, 50);
       camToggleBtn.classList.add('off');
+      camToggleBtn.classList.remove('paused');
       camToggleIcon.innerHTML = CAM_ICON_OFF;
       camToggleLabel.textContent = 'Activar cámara';
       camToggleBtn.setAttribute('aria-label', 'Activar cámara');
@@ -3490,6 +3510,7 @@ var qrcode = function() {
   // termine antes de pedir la cámara de nuevo.
   function startCamera(){
     camPaused.classList.add('hidden');
+    camToggleBtn.classList.remove('paused');
     if (html5QrCode || cameraStarting) return;
     if (typeof Html5Qrcode === 'undefined'){ showCamFallback(); return; }
     cameraStarting = true;
@@ -3574,6 +3595,7 @@ var qrcode = function() {
     stopCamera();
     if (modeCameraBtn.classList.contains('selected')){
       camPaused.classList.remove('hidden');
+      camToggleBtn.classList.add('paused');
     }
   }
 
